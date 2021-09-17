@@ -1,6 +1,6 @@
 # This repository contains solutions to the CS599 L1 assignments 
 
-## Pre-requisites for running queries:
+## Prerequisites for running queries:
 
 1. Python (3.7+)
 2. [Pytest](https://docs.pytest.org/en/stable/)
