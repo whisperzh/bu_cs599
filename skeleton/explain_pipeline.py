@@ -94,8 +94,8 @@ if __name__ == '__main__':
     # YOUR CODE HERE 
 
     # TASK IV: Map each SHAP value to its brain region and aggregate SHAP values per region.
-    #          Report the top-10 most contributing regions per class (AD/NC) as top10_{class}.txt
-    #          Save text files into output/top10/
+    #          Report the top-10 most contributing regions per class (AD/NC) as top10_{class}.csv
+    #          Save CSV files into output/top10/
     # YOUR CODE HERE 
 
     pass
