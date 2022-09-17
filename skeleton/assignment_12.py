@@ -35,22 +35,22 @@ class ATuple:
         self.operator = operator
 
     # Returns the lineage of self
-    def lineage() -> List[ATuple]:
+    def lineage(self) -> List[ATuple]:
         # YOUR CODE HERE (ONLY FOR TASK 1 IN ASSIGNMENT 2)
         pass
 
     # Returns the Where-provenance of the attribute at index 'att_index' of self
-    def where(att_index) -> List[Tuple]:
+    def where(self,att_index) -> List[Tuple]:
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
         pass
 
     # Returns the How-provenance of self
-    def how() -> string:
+    def how(self) -> string:
         # YOUR CODE HERE (ONLY FOR TASK 3 IN ASSIGNMENT 2)
         pass
 
     # Returns the input tuples with responsibility \rho >= 0.5 (if any)
-    def responsible_inputs() -> List[Tuple]:
+    def responsible_inputs(self) -> List[Tuple]:
         # YOUR CODE HERE (ONLY FOR TASK 4 IN ASSIGNMENT 2)
         pass
 
@@ -67,11 +67,12 @@ class Operator:
         annotations (True) or not (False).
     """
     def __init__(self, id=None, name=None, track_prov=False,
-                                           propagate_prov=False):
+                                           propagate_prov=False, operators: List[Operator] = None):
         self.id = _generate_uuid() if id is None else id
         self.name = "Undefined" if name is None else name
         self.track_prov = track_prov
         self.propagate_prov = propagate_prov
+        self.operators = operators
         logger.debug("Created {} operator with id {}".format(self.name,
                                                              self.id))
 
@@ -87,6 +88,10 @@ class Operator:
     def where(self, att_index: int, tuples: List[ATuple]) -> List[List[Tuple]]:
         logger.error("Where-provenance method not implemented!")
 
+    # NOTE (john): Must be implemented by the subclasses
+    def apply(self, tuples: List[ATuple]):
+        logger.error("Apply method is not implemented!")
+
 # Scan operator
 class Scan(Operator):
     """Scan operator.
@@ -101,9 +106,9 @@ class Scan(Operator):
     """
     # Initializes scan operator
     def __init__(self, filepath, filter=None, track_prov=False,
-                                              propagate_prov=False):
+                                              propagate_prov=False, operators: List[Operator] = None):
         super(Scan, self).__init__(name="Scan", track_prov=track_prov,
-                                   propagate_prov=propagate_prov)
+                                   propagate_prov=propagate_prov, operators=operators)
         # YOUR CODE HERE
         pass
 
@@ -123,6 +128,14 @@ class Scan(Operator):
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
         pass
 
+    # Gets the next batch of tuples
+    def apply(self, tuples: List[ATuple]):
+        pass
+
+    # Only for Scan: Start the process of reading tuples
+    def start(self):
+        pass
+
 # Equi-join operator
 class Join(Operator):
     """Equi-join operator.
@@ -138,12 +151,12 @@ class Join(Operator):
         annotations (True) or not (False).
     """
     # Initializes join operator
-    def __init__(self, left_input, right_input, left_join_attribute,
+    def __init__(self, left_inputs: List[Operator], right_inputs: List[Operator], left_join_attribute,
                                                 right_join_attribute,
                                                 track_prov=False,
-                                                propagate_prov=False):
+                                                propagate_prov=False, operators: List[Operator] = None):
         super(Join, self).__init__(name="Join", track_prov=track_prov,
-                                   propagate_prov=propagate_prov)
+                                   propagate_prov=propagate_prov, operators=None)
         # YOUR CODE HERE
         pass
 
@@ -163,6 +176,10 @@ class Join(Operator):
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
         pass
 
+    # Gets the next batch of tuples
+    def apply(self, tuples: List[ATuple]):
+        pass
+
 # Project operator
 class Project(Operator):
     """Project operator.
@@ -178,10 +195,10 @@ class Project(Operator):
         annotations (True) or not (False).
     """
     # Initializes project operator
-    def __init__(self, input, fields_to_keep=[], track_prov=False,
-                                                 propagate_prov=False):
+    def __init__(self, inputs: List[Operator], fields_to_keep=[], track_prov=False,
+                                                 propagate_prov=False, operators: List[None] = None):
         super(Project, self).__init__(name="Project", track_prov=track_prov,
-                                      propagate_prov=propagate_prov)
+                                      propagate_prov=propagate_prov, operators=operators)
         # YOUR CODE HERE
         pass
 
@@ -201,6 +218,10 @@ class Project(Operator):
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
         pass
 
+    # Gets the next batch of tuples
+    def apply(self, tuples: List[ATuple]):
+        pass
+
 # Group-by operator
 class GroupBy(Operator):
     """Group-by operator.
@@ -216,10 +237,10 @@ class GroupBy(Operator):
         annotations (True) or not (False).
     """
     # Initializes average operator
-    def __init__(self, input, key, value, agg_gun, track_prov=False,
-                                                   propagate_prov=False):
-        super(Average, self).__init__(name="GroupBy", track_prov=track_prov,
-                                      propagate_prov=propagate_prov)
+    def __init__(self, inputs: List[Operator], key, value, agg_gun, track_prov=False,
+                                                   propagate_prov=False, operators: List[Operator] = None):
+        super(GroupBy, self).__init__(name="GroupBy", track_prov=track_prov,
+                                      propagate_prov=propagate_prov, operators=operators)
         # YOUR CODE HERE
         pass
 
@@ -239,6 +260,10 @@ class GroupBy(Operator):
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
         pass
 
+    # Gets the next batch of tuples
+    def apply(self, tuples: List[ATuple]):
+        pass
+
 # Custom histogram operator
 class Histogram(Operator):
     """Histogram operator.
@@ -253,16 +278,22 @@ class Histogram(Operator):
         annotations (True) or not (False).
     """
     # Initializes histogram operator
-    def __init__(self, input, key=0, track_prov=False, propagate_prov=False):
+    def __init__(self, inputs: List[Operator], key=0, track_prov=False, propagate_prov=False,
+                 operators: List[Operator] = None):
         super(Histogram, self).__init__(name="Histogram",
                                         track_prov=track_prov,
-                                        propagate_prov=propagate_prov)
+                                        propagate_prov=propagate_prov,
+                                        operators=operators)
         # YOUR CODE HERE
         pass
 
     # Returns histogram (or None if done)
     def get_next(self):
         # YOUR CODE HERE
+        pass
+
+    # Gets the next batch of tuples
+    def apply(self, tuples: List[ATuple]):
         pass
 
 # Order by operator
@@ -280,11 +311,12 @@ class OrderBy(Operator):
         annotations (True) or not (False).
     """
     # Initializes order-by operator
-    def __init__(self, input, comparator, ASC=True, track_prov=False,
-                                                    propagate_prov=False):
+    def __init__(self, inputs: List[Operator], comparator, ASC=True, track_prov=False,
+                                                    propagate_prov=False, operators: List[Operator] = None):
         super(OrderBy, self).__init__(name="OrderBy",
                                       track_prov=track_prov,
-                                      propagate_prov=propagate_prov)
+                                      propagate_prov=propagate_prov,
+                                      operators=operators)
         # YOUR CODE HERE
         pass
 
@@ -304,6 +336,10 @@ class OrderBy(Operator):
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
         pass
 
+    # Gets the next batch of tuples
+    def apply(self, tuples: List[ATuple]):
+        pass
+
 # Top-k operator
 class TopK(Operator):
     """TopK operator.
@@ -317,9 +353,11 @@ class TopK(Operator):
         annotations (True) or not (False).
     """
     # Initializes top-k operator
-    def __init__(self, input, k=None, track_prov=False, propagate_prov=False):
+    def __init__(self, inputs: List[Operator], k=None, track_prov=False, propagate_prov=False,
+                 operators: List[Operator] = None):
         super(TopK, self).__init__(name="TopK", track_prov=track_prov,
-                                   propagate_prov=propagate_prov)
+                                   propagate_prov=propagate_prov,
+                                   operators=operators)
         # YOUR CODE HERE
         pass
 
@@ -339,6 +377,10 @@ class TopK(Operator):
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
         pass
 
+    # Gets the next batch of tuples
+    def apply(self, tuples: List[ATuple]):
+        pass
+
 # Filter operator
 class Select(Operator):
     """Select operator.
@@ -352,16 +394,21 @@ class Select(Operator):
         annotations (True) or not (False).
     """
     # Initializes select operator
-    def __init__(self, input, predicate, track_prov=False,
-                                         propagate_prov=False):
-        super(Filter, self).__init__(name="Select", track_prov=track_prov,
-                                     propagate_prov=propagate_prov)
+    def __init__(self, inputs: List[Operator], predicate, track_prov=False,
+                                         propagate_prov=False, operators: List[Operator] = None):
+        super(Select, self).__init__(name="Select", track_prov=track_prov,
+                                     propagate_prov=propagate_prov,
+                                     operators=operators)
         # YOUR CODE HERE
         pass
 
     # Returns next batch of tuples that pass the filter (or None if done)
     def get_next(self):
         # YOUR CODE HERE
+        pass
+
+    # Gets the next batch of tuples
+    def apply(self, tuples: List[ATuple]):
         pass
 
 
