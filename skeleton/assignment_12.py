@@ -67,12 +67,13 @@ class Operator:
         annotations (True) or not (False).
     """
     def __init__(self, id=None, name=None, track_prov=False,
-                                           propagate_prov=False, operators: List[Operator] = None):
+                                           propagate_prov=False, operators: List[Operator] = None, pull=True):
         self.id = _generate_uuid() if id is None else id
         self.name = "Undefined" if name is None else name
         self.track_prov = track_prov
         self.propagate_prov = propagate_prov
         self.operators = operators
+        self.pull = pull
         logger.debug("Created {} operator with id {}".format(self.name,
                                                              self.id))
 
@@ -106,9 +107,9 @@ class Scan(Operator):
     """
     # Initializes scan operator
     def __init__(self, filepath, filter=None, track_prov=False,
-                                              propagate_prov=False, operators: List[Operator] = None):
+                                              propagate_prov=False, operators: List[Operator] = None, pull=True):
         super(Scan, self).__init__(name="Scan", track_prov=track_prov,
-                                   propagate_prov=propagate_prov, operators=operators)
+                                   propagate_prov=propagate_prov, operators=operators, pull=pull)
         # YOUR CODE HERE
         pass
 
@@ -154,9 +155,9 @@ class Join(Operator):
     def __init__(self, left_inputs: List[Operator], right_inputs: List[Operator], left_join_attribute,
                                                 right_join_attribute,
                                                 track_prov=False,
-                                                propagate_prov=False, operators: List[Operator] = None):
+                                                propagate_prov=False, operators: List[Operator] = None, pull=True):
         super(Join, self).__init__(name="Join", track_prov=track_prov,
-                                   propagate_prov=propagate_prov, operators=None)
+                                   propagate_prov=propagate_prov, operators=operators, pull=pull)
         # YOUR CODE HERE
         pass
 
@@ -196,9 +197,9 @@ class Project(Operator):
     """
     # Initializes project operator
     def __init__(self, inputs: List[Operator], fields_to_keep=[], track_prov=False,
-                                                 propagate_prov=False, operators: List[None] = None):
+                                                 propagate_prov=False, operators: List[None] = None, pull=True):
         super(Project, self).__init__(name="Project", track_prov=track_prov,
-                                      propagate_prov=propagate_prov, operators=operators)
+                                      propagate_prov=propagate_prov, operators=operators, pull=pull)
         # YOUR CODE HERE
         pass
 
@@ -238,9 +239,9 @@ class GroupBy(Operator):
     """
     # Initializes average operator
     def __init__(self, inputs: List[Operator], key, value, agg_gun, track_prov=False,
-                                                   propagate_prov=False, operators: List[Operator] = None):
+                                                   propagate_prov=False, operators: List[Operator] = None, pull=True):
         super(GroupBy, self).__init__(name="GroupBy", track_prov=track_prov,
-                                      propagate_prov=propagate_prov, operators=operators)
+                                      propagate_prov=propagate_prov, operators=operators, pull=pull)
         # YOUR CODE HERE
         pass
 
@@ -279,11 +280,12 @@ class Histogram(Operator):
     """
     # Initializes histogram operator
     def __init__(self, inputs: List[Operator], key=0, track_prov=False, propagate_prov=False,
-                 operators: List[Operator] = None):
+                 operators: List[Operator] = None, pull=True):
         super(Histogram, self).__init__(name="Histogram",
                                         track_prov=track_prov,
                                         propagate_prov=propagate_prov,
-                                        operators=operators)
+                                        operators=operators,
+                                        pull=pull)
         # YOUR CODE HERE
         pass
 
@@ -312,11 +314,12 @@ class OrderBy(Operator):
     """
     # Initializes order-by operator
     def __init__(self, inputs: List[Operator], comparator, ASC=True, track_prov=False,
-                                                    propagate_prov=False, operators: List[Operator] = None):
+                                                    propagate_prov=False, operators: List[Operator] = None, pull=True):
         super(OrderBy, self).__init__(name="OrderBy",
                                       track_prov=track_prov,
                                       propagate_prov=propagate_prov,
-                                      operators=operators)
+                                      operators=operators,
+                                      pull=pull)
         # YOUR CODE HERE
         pass
 
@@ -354,10 +357,11 @@ class TopK(Operator):
     """
     # Initializes top-k operator
     def __init__(self, inputs: List[Operator], k=None, track_prov=False, propagate_prov=False,
-                 operators: List[Operator] = None):
+                 operators: List[Operator] = None, pull=True):
         super(TopK, self).__init__(name="TopK", track_prov=track_prov,
                                    propagate_prov=propagate_prov,
-                                   operators=operators)
+                                   operators=operators,
+                                   pull=pull)
         # YOUR CODE HERE
         pass
 
@@ -395,10 +399,11 @@ class Select(Operator):
     """
     # Initializes select operator
     def __init__(self, inputs: List[Operator], predicate, track_prov=False,
-                                         propagate_prov=False, operators: List[Operator] = None):
+                                         propagate_prov=False, operators: List[Operator] = None,pull=True):
         super(Select, self).__init__(name="Select", track_prov=track_prov,
                                      propagate_prov=propagate_prov,
-                                     operators=operators)
+                                     operators=operators,
+                                     pull=pull)
         # YOUR CODE HERE
         pass
 
