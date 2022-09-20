@@ -17,15 +17,14 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 
-# Partition strategy enum
-class PartitionStrategy(Enum):
-    RR = "round_robin"
-    HASH = "hash_join"
-
 # Generates unique operator IDs
 def _generate_uuid():
     return uuid.uuid4()
 
+# Partition strategy enum
+class PartitionStrategy(Enum):
+    RR = "Round_Robin"
+    HASH = "Hash_Based"
 
 # Custom tuple class with optional metadata
 class ATuple:
@@ -47,7 +46,7 @@ class ATuple:
         pass
 
     # Returns the Where-provenance of the attribute at index 'att_index' of self
-    def where(self,att_index) -> List[Tuple]:
+    def where(self, att_index) -> List[Tuple]:
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
         pass
 
@@ -72,22 +71,29 @@ class Operator:
         mappings (True) or not (False).
         propagate_prov (bool): Defines whether to propagate provenance
         annotations (True) or not (False).
+        pull (bool): Defines whether to use pull-based (True) vs
+        push-based (False) evaluation.
+        partition_strategy (Enum): Defines the output partitioning
+        strategy.
     """
-    def __init__(self, id=None, name=None, track_prov=False,
-                 propagate_prov=False, outputs: List[Operator] = None, pull=True,
-                 partition_strategy: PartitionStrategy = PartitionStrategy.RR):
+    def __init__(self,
+                 id=None,
+                 name=None,
+                 track_prov=False,
+                 propagate_prov=False,
+                 pull=True,
+                 partition_strategy : PartitionStrategy = PartitionStrategy.RR):
         self.id = _generate_uuid() if id is None else id
         self.name = "Undefined" if name is None else name
         self.track_prov = track_prov
         self.propagate_prov = propagate_prov
-        self.outputs = outputs
         self.pull = pull
         self.partition_strategy = partition_strategy
         logger.debug("Created {} operator with id {}".format(self.name,
                                                              self.id))
 
     # NOTE (john): Must be implemented by the subclasses
-    def get_next(self):
+    def get_next(self) -> List[ATuple]:
         logger.error("Method not implemented!")
 
     # NOTE (john): Must be implemented by the subclasses
@@ -99,7 +105,7 @@ class Operator:
         logger.error("Where-provenance method not implemented!")
 
     # NOTE (john): Must be implemented by the subclasses
-    def apply(self, tuples: List[ATuple]):
+    def apply(self, tuples: List[ATuple]) -> bool:
         logger.error("Apply method is not implemented!")
 
 # Scan operator
@@ -108,18 +114,31 @@ class Scan(Operator):
 
     Attributes:
         filepath (string): The path to the input file.
+        outputs (List): A list of handles to the instances of the next
+        operator in the plan.
         filter (function): An optional user-defined filter.
         track_prov (bool): Defines whether to keep input-to-output
         mappings (True) or not (False).
         propagate_prov (bool): Defines whether to propagate provenance
         annotations (True) or not (False).
+        pull (bool): Defines whether to use pull-based (True) vs
+        push-based (False) evaluation.
+        partition_strategy (Enum): Defines the output partitioning
+        strategy.
     """
     # Initializes scan operator
-    def __init__(self, filepath, filter=None, track_prov=False,
-                 propagate_prov=False, outputs: List[Operator] = None, pull=True,
-                 partition_strategy: PartitionStrategy = PartitionStrategy.RR):
-        super(Scan, self).__init__(name="Scan", track_prov=track_prov,
-                                   propagate_prov=propagate_prov, outputs=outputs, pull=pull,
+    def __init__(self,
+                 filepath,
+                 outputs : List[Operator],
+                 filter=None,
+                 track_prov=False,
+                 propagate_prov=False,
+                 pull=True,
+                 partition_strategy : PartitionStrategy = PartitionStrategy.RR):
+        super(Scan, self).__init__(name="Scan",
+                                   track_prov=track_prov,
+                                   propagate_prov=propagate_prov,
+                                   pull=pull,
                                    partition_strategy=partition_strategy)
         # YOUR CODE HERE
         pass
@@ -140,11 +159,7 @@ class Scan(Operator):
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
         pass
 
-    # Gets the next batch of tuples
-    def apply(self, tuples: List[ATuple]):
-        pass
-
-    # Only for Scan: Start the process of reading tuples
+    # Starts the process of reading tuples (only for push-based evaluation)
     def start(self):
         pass
 
@@ -153,23 +168,38 @@ class Join(Operator):
     """Equi-join operator.
 
     Attributes:
-        left_input (Operator): A handle to the left input.
-        right_input (Operator): A handle to the left input.
+        left_inputs (List): A list of handles to the instances of the operator
+        that produces the left input.
+        right_inputs (List):A list of handles to the instances of the operator
+        that produces the right input.
+        outputs (List): A list of handles to the instances of the next
+        operator in the plan.
         left_join_attribute (int): The index of the left join attribute.
         right_join_attribute (int): The index of the right join attribute.
         track_prov (bool): Defines whether to keep input-to-output
         mappings (True) or not (False).
         propagate_prov (bool): Defines whether to propagate provenance
         annotations (True) or not (False).
+        pull (bool): Defines whether to use pull-based (True) vs
+        push-based (False) evaluation.
+        partition_strategy (Enum): Defines the output partitioning
+        strategy.
     """
     # Initializes join operator
-    def __init__(self, left_inputs: List[Operator], right_inputs: List[Operator], left_join_attribute,
+    def __init__(self,
+                 left_inputs : List[Operator],
+                 right_inputs : List[Operator],
+                 outputs : List[Operator],
+                 left_join_attribute,
                  right_join_attribute,
                  track_prov=False,
-                 propagate_prov=False, outputs: List[Operator] = None, pull=True,
-                 partition_strategy: PartitionStrategy = PartitionStrategy.RR):
-        super(Join, self).__init__(name="Join", track_prov=track_prov,
-                                   propagate_prov=propagate_prov, outputs=outputs, pull=pull,
+                 propagate_prov=False,
+                 pull=True,
+                 partition_strategy : PartitionStrategy = PartitionStrategy.RR):
+        super(Join, self).__init__(name="Join",
+                                   track_prov=track_prov,
+                                   propagate_prov=propagate_prov,
+                                   pull=pull,
                                    partition_strategy=partition_strategy)
         # YOUR CODE HERE
         pass
@@ -190,7 +220,7 @@ class Join(Operator):
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
         pass
 
-    # Gets the next batch of tuples
+    # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
         pass
 
@@ -199,7 +229,10 @@ class Project(Operator):
     """Project operator.
 
     Attributes:
-        input (Operator): A handle to the input.
+        inputs (List): A list of handles to the instances of the previous
+        operator in the plan.
+        outputs (List): A list of handles to the instances of the next
+        operator in the plan.
         fields_to_keep (List(int)): A list of attribute indices to keep.
         If empty, the project operator behaves like an identity map, i.e., it
         produces and output that is identical to its input.
@@ -207,12 +240,24 @@ class Project(Operator):
         mappings (True) or not (False).
         propagate_prov (bool): Defines whether to propagate provenance
         annotations (True) or not (False).
+        pull (bool): Defines whether to use pull-based (True) vs
+        push-based (False) evaluation.
+        partition_strategy (Enum): Defines the output partitioning
+        strategy.
     """
     # Initializes project operator
-    def __init__(self, inputs: List[Operator], fields_to_keep=[], track_prov=False,
-                 propagate_prov=False, outputs: List[None] = None, pull=True, partition_strategy: PartitionStrategy = PartitionStrategy.RR):
-        super(Project, self).__init__(name="Project", track_prov=track_prov,
-                                      propagate_prov=propagate_prov, outputs=outputs, pull=pull,
+    def __init__(self,
+                 inputs : List[Operator],
+                 outputs : List[None],
+                 fields_to_keep=[],
+                 track_prov=False,
+                 propagate_prov=False,
+                 pull=True,
+                 partition_strategy : PartitionStrategy = PartitionStrategy.RR):
+        super(Project, self).__init__(name="Project",
+                                      track_prov=track_prov,
+                                      propagate_prov=propagate_prov,
+                                      pull=pull,
                                       partition_strategy=partition_strategy)
         # YOUR CODE HERE
         pass
@@ -233,7 +278,7 @@ class Project(Operator):
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
         pass
 
-    # Gets the next batch of tuples
+    # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
         pass
 
@@ -242,7 +287,10 @@ class GroupBy(Operator):
     """Group-by operator.
 
     Attributes:
-        input (Operator): A handle to the input
+        inputs (List): A list of handles to the instances of the previous
+        operator in the plan.
+        outputs (List): A list of handles to the instances of the next
+        operator in the plan.
         key (int): The index of the key to group tuples.
         value (int): The index of the attribute we want to aggregate.
         agg_fun (function): The aggregation function (e.g. AVG)
@@ -250,13 +298,26 @@ class GroupBy(Operator):
         mappings (True) or not (False).
         propagate_prov (bool): Defines whether to propagate provenance
         annotations (True) or not (False).
+        pull (bool): Defines whether to use pull-based (True) vs
+        push-based (False) evaluation.
+        partition_strategy (Enum): Defines the output partitioning
+        strategy.
     """
     # Initializes average operator
-    def __init__(self, inputs: List[Operator], key, value, agg_gun, track_prov=False,
-                 propagate_prov=False, outputs: List[Operator] = None, pull=True,
-                 partition_strategy: PartitionStrategy = PartitionStrategy.RR):
-        super(GroupBy, self).__init__(name="GroupBy", track_prov=track_prov,
-                                      propagate_prov=propagate_prov, outputs=outputs, pull=pull,
+    def __init__(self,
+                 inputs : List[Operator],
+                 outputs : List[Operator],
+                 key,
+                 value,
+                 agg_gun,
+                 track_prov=False,
+                 propagate_prov=False,
+                 pull=True,
+                 partition_strategy : PartitionStrategy = PartitionStrategy.RR):
+        super(GroupBy, self).__init__(name="GroupBy",
+                                      track_prov=track_prov,
+                                      propagate_prov=propagate_prov,
+                                      pull=pull,
                                       partition_strategy=partition_strategy)
         # YOUR CODE HERE
         pass
@@ -277,7 +338,7 @@ class GroupBy(Operator):
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
         pass
 
-    # Gets the next batch of tuples
+    # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
         pass
 
@@ -286,23 +347,35 @@ class Histogram(Operator):
     """Histogram operator.
 
     Attributes:
-        input (Operator): A handle to the input
+        inputs (List): A list of handles to the instances of the previous
+        operator in the plan.
+        outputs (List): A list of handles to the instances of the next
+        operator in the plan.
         key (int): The index of the key to group tuples. The operator outputs
         the total number of tuples per distinct key.
         track_prov (bool): Defines whether to keep input-to-output
         mappings (True) or not (False).
         propagate_prov (bool): Defines whether to propagate provenance
         annotations (True) or not (False).
+        pull (bool): Defines whether to use pull-based (True) vs
+        push-based (False) evaluation.
+        partition_strategy (Enum): Defines the output partitioning
+        strategy.
     """
     # Initializes histogram operator
-    def __init__(self, inputs: List[Operator], key=0, track_prov=False, propagate_prov=False,
-                 outputs: List[Operator] = None, pull=True,
-                 partition_strategy: PartitionStrategy = PartitionStrategy.RR):
+    def __init__(self,
+                 inputs : List[Operator],
+                 outputs : List[Operator],
+                 key=0,
+                 track_prov=False,
+                 propagate_prov=False,
+                 pull=True,
+                 partition_strategy : PartitionStrategy = PartitionStrategy.RR):
         super(Histogram, self).__init__(name="Histogram",
                                         track_prov=track_prov,
                                         propagate_prov=propagate_prov,
-                                        outputs=outputs,
-                                        pull=pull, partition_strategy=partition_strategy)
+                                        pull=pull,
+                                        partition_strategy=partition_strategy)
         # YOUR CODE HERE
         pass
 
@@ -311,7 +384,7 @@ class Histogram(Operator):
         # YOUR CODE HERE
         pass
 
-    # Gets the next batch of tuples
+    # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
         pass
 
@@ -320,7 +393,10 @@ class OrderBy(Operator):
     """OrderBy operator.
 
     Attributes:
-        input (Operator): A handle to the input
+        inputs (List): A list of handles to the instances of the previous
+        operator in the plan.
+        outputs (List): A list of handles to the instances of the next
+        operator in the plan.
         comparator (function): The user-defined comparator used for sorting the
         input tuples.
         ASC (bool): True if sorting in ascending order, False otherwise.
@@ -328,16 +404,26 @@ class OrderBy(Operator):
         mappings (True) or not (False).
         propagate_prov (bool): Defines whether to propagate provenance
         annotations (True) or not (False).
+        pull (bool): Defines whether to use pull-based (True) vs
+        push-based (False) evaluation.
+        partition_strategy (Enum): Defines the output partitioning
+        strategy.
     """
     # Initializes order-by operator
-    def __init__(self, inputs: List[Operator], comparator, ASC=True, track_prov=False,
-                 propagate_prov=False, outputs: List[Operator] = None, pull=True,
-                 partition_strategy: PartitionStrategy = PartitionStrategy.RR):
+    def __init__(self,
+                 inputs : List[Operator],
+                 outputs : List[Operator],
+                 comparator,
+                 ASC=True,
+                 track_prov=False,
+                 propagate_prov=False,
+                 pull=True,
+                 partition_strategy : PartitionStrategy = PartitionStrategy.RR):
         super(OrderBy, self).__init__(name="OrderBy",
                                       track_prov=track_prov,
                                       propagate_prov=propagate_prov,
-                                      outputs=outputs,
-                                      pull=pull, partition_strategy=partition_strategy)
+                                      pull=pull,
+                                      partition_strategy=partition_strategy)
         # YOUR CODE HERE
         pass
 
@@ -357,7 +443,7 @@ class OrderBy(Operator):
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
         pass
 
-    # Gets the next batch of tuples
+    # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
         pass
 
@@ -366,21 +452,34 @@ class TopK(Operator):
     """TopK operator.
 
     Attributes:
-        input (Operator): A handle to the input.
+        inputs (List): A list of handles to the instances of the previous
+        operator in the plan.
+        outputs (List): A list of handles to the instances of the next
+        operator in the plan.
         k (int): The maximum number of tuples to output.
         track_prov (bool): Defines whether to keep input-to-output
         mappings (True) or not (False).
         propagate_prov (bool): Defines whether to propagate provenance
         annotations (True) or not (False).
+        pull (bool): Defines whether to use pull-based (True) vs
+        push-based (False) evaluation.
+        partition_strategy (Enum): Defines the output partitioning
+        strategy.
     """
     # Initializes top-k operator
-    def __init__(self, inputs: List[Operator], k=None, track_prov=False, propagate_prov=False,
-                 outputs: List[Operator] = None, pull=True,
-                 partition_strategy: PartitionStrategy = PartitionStrategy.RR):
-        super(TopK, self).__init__(name="TopK", track_prov=track_prov,
+    def __init__(self,
+                 inputs : List[Operator],
+                 outputs : List[Operator],
+                 k=None,
+                 track_prov=False,
+                 propagate_prov=False,
+                 pull=True,
+                 partition_strategy : PartitionStrategy = PartitionStrategy.RR):
+        super(TopK, self).__init__(name="TopK",
+                                   track_prov=track_prov,
                                    propagate_prov=propagate_prov,
-                                   outputs=outputs,
-                                   pull=pull, partition_strategy=partition_strategy)
+                                   pull=pull,
+                                   partition_strategy=partition_strategy)
         # YOUR CODE HERE
         pass
 
@@ -400,7 +499,7 @@ class TopK(Operator):
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
         pass
 
-    # Gets the next batch of tuples
+    # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
         pass
 
@@ -409,21 +508,34 @@ class Select(Operator):
     """Select operator.
 
     Attributes:
-        input (Operator): A handle to the input.
+        inputs (List): A list of handles to the instances of the previous
+        operator in the plan.
+        outputs (List): A list of handles to the instances of the next
+        operator in the plan.
         predicate (function): The selection predicate.
         track_prov (bool): Defines whether to keep input-to-output
         mappings (True) or not (False).
         propagate_prov (bool): Defines whether to propagate provenance
         annotations (True) or not (False).
+        pull (bool): Defines whether to use pull-based (True) vs
+        push-based (False) evaluation.
+        partition_strategy (Enum): Defines the output partitioning
+        strategy.
     """
     # Initializes select operator
-    def __init__(self, inputs: List[Operator], predicate, track_prov=False,
-                 propagate_prov=False, outputs: List[Operator] = None, pull=True,
-                 partition_strategy: PartitionStrategy = PartitionStrategy.RR):
-        super(Select, self).__init__(name="Select", track_prov=track_prov,
+    def __init__(self,
+                 inputs : List[Operator],
+                 outputs : List[Operator],
+                 predicate,
+                 track_prov=False,
+                 propagate_prov=False,
+                 pull=True,
+                 partition_strategy : PartitionStrategy = PartitionStrategy.RR):
+        super(Select, self).__init__(name="Select",
+                                     track_prov=track_prov,
                                      propagate_prov=propagate_prov,
-                                     outputs=outputs,
-                                     pull=pull, partition_strategy=partition_strategy)
+                                     pull=pull,
+                                     partition_strategy=partition_strategy)
         # YOUR CODE HERE
         pass
 
@@ -432,7 +544,7 @@ class Select(Operator):
         # YOUR CODE HERE
         pass
 
-    # Gets the next batch of tuples
+    # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
         pass
 
