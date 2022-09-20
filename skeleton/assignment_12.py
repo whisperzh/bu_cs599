@@ -5,6 +5,7 @@ from __future__ import print_function
 
 import csv
 import logging
+from enum import Enum
 from typing import List, Tuple
 import uuid
 
@@ -14,6 +15,12 @@ import ray
 #              information about your program
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
+
+
+# Partition strategy enum
+class PartitionStrategy(Enum):
+    RR = "round_robin"
+    HASH = "hash_join"
 
 # Generates unique operator IDs
 def _generate_uuid():
@@ -67,13 +74,15 @@ class Operator:
         annotations (True) or not (False).
     """
     def __init__(self, id=None, name=None, track_prov=False,
-                                           propagate_prov=False, operators: List[Operator] = None, pull=True):
+                 propagate_prov=False, outputs: List[Operator] = None, pull=True,
+                 partition_strategy: PartitionStrategy = PartitionStrategy.RR):
         self.id = _generate_uuid() if id is None else id
         self.name = "Undefined" if name is None else name
         self.track_prov = track_prov
         self.propagate_prov = propagate_prov
-        self.operators = operators
+        self.outputs = outputs
         self.pull = pull
+        self.partition_strategy = partition_strategy
         logger.debug("Created {} operator with id {}".format(self.name,
                                                              self.id))
 
@@ -107,9 +116,11 @@ class Scan(Operator):
     """
     # Initializes scan operator
     def __init__(self, filepath, filter=None, track_prov=False,
-                                              propagate_prov=False, operators: List[Operator] = None, pull=True):
+                 propagate_prov=False, outputs: List[Operator] = None, pull=True,
+                 partition_strategy: PartitionStrategy = PartitionStrategy.RR):
         super(Scan, self).__init__(name="Scan", track_prov=track_prov,
-                                   propagate_prov=propagate_prov, operators=operators, pull=pull)
+                                   propagate_prov=propagate_prov, outputs=outputs, pull=pull,
+                                   partition_strategy=partition_strategy)
         # YOUR CODE HERE
         pass
 
@@ -153,11 +164,13 @@ class Join(Operator):
     """
     # Initializes join operator
     def __init__(self, left_inputs: List[Operator], right_inputs: List[Operator], left_join_attribute,
-                                                right_join_attribute,
-                                                track_prov=False,
-                                                propagate_prov=False, operators: List[Operator] = None, pull=True):
+                 right_join_attribute,
+                 track_prov=False,
+                 propagate_prov=False, outputs: List[Operator] = None, pull=True,
+                 partition_strategy: PartitionStrategy = PartitionStrategy.RR):
         super(Join, self).__init__(name="Join", track_prov=track_prov,
-                                   propagate_prov=propagate_prov, operators=operators, pull=pull)
+                                   propagate_prov=propagate_prov, outputs=outputs, pull=pull,
+                                   partition_strategy=partition_strategy)
         # YOUR CODE HERE
         pass
 
@@ -197,9 +210,10 @@ class Project(Operator):
     """
     # Initializes project operator
     def __init__(self, inputs: List[Operator], fields_to_keep=[], track_prov=False,
-                                                 propagate_prov=False, operators: List[None] = None, pull=True):
+                 propagate_prov=False, outputs: List[None] = None, pull=True, partition_strategy: PartitionStrategy = PartitionStrategy.RR):
         super(Project, self).__init__(name="Project", track_prov=track_prov,
-                                      propagate_prov=propagate_prov, operators=operators, pull=pull)
+                                      propagate_prov=propagate_prov, outputs=outputs, pull=pull,
+                                      partition_strategy=partition_strategy)
         # YOUR CODE HERE
         pass
 
@@ -239,9 +253,11 @@ class GroupBy(Operator):
     """
     # Initializes average operator
     def __init__(self, inputs: List[Operator], key, value, agg_gun, track_prov=False,
-                                                   propagate_prov=False, operators: List[Operator] = None, pull=True):
+                 propagate_prov=False, outputs: List[Operator] = None, pull=True,
+                 partition_strategy: PartitionStrategy = PartitionStrategy.RR):
         super(GroupBy, self).__init__(name="GroupBy", track_prov=track_prov,
-                                      propagate_prov=propagate_prov, operators=operators, pull=pull)
+                                      propagate_prov=propagate_prov, outputs=outputs, pull=pull,
+                                      partition_strategy=partition_strategy)
         # YOUR CODE HERE
         pass
 
@@ -280,12 +296,13 @@ class Histogram(Operator):
     """
     # Initializes histogram operator
     def __init__(self, inputs: List[Operator], key=0, track_prov=False, propagate_prov=False,
-                 operators: List[Operator] = None, pull=True):
+                 outputs: List[Operator] = None, pull=True,
+                 partition_strategy: PartitionStrategy = PartitionStrategy.RR):
         super(Histogram, self).__init__(name="Histogram",
                                         track_prov=track_prov,
                                         propagate_prov=propagate_prov,
-                                        operators=operators,
-                                        pull=pull)
+                                        outputs=outputs,
+                                        pull=pull, partition_strategy=partition_strategy)
         # YOUR CODE HERE
         pass
 
@@ -314,12 +331,13 @@ class OrderBy(Operator):
     """
     # Initializes order-by operator
     def __init__(self, inputs: List[Operator], comparator, ASC=True, track_prov=False,
-                                                    propagate_prov=False, operators: List[Operator] = None, pull=True):
+                 propagate_prov=False, outputs: List[Operator] = None, pull=True,
+                 partition_strategy: PartitionStrategy = PartitionStrategy.RR):
         super(OrderBy, self).__init__(name="OrderBy",
                                       track_prov=track_prov,
                                       propagate_prov=propagate_prov,
-                                      operators=operators,
-                                      pull=pull)
+                                      outputs=outputs,
+                                      pull=pull, partition_strategy=partition_strategy)
         # YOUR CODE HERE
         pass
 
@@ -357,11 +375,12 @@ class TopK(Operator):
     """
     # Initializes top-k operator
     def __init__(self, inputs: List[Operator], k=None, track_prov=False, propagate_prov=False,
-                 operators: List[Operator] = None, pull=True):
+                 outputs: List[Operator] = None, pull=True,
+                 partition_strategy: PartitionStrategy = PartitionStrategy.RR):
         super(TopK, self).__init__(name="TopK", track_prov=track_prov,
                                    propagate_prov=propagate_prov,
-                                   operators=operators,
-                                   pull=pull)
+                                   outputs=outputs,
+                                   pull=pull, partition_strategy=partition_strategy)
         # YOUR CODE HERE
         pass
 
@@ -399,11 +418,12 @@ class Select(Operator):
     """
     # Initializes select operator
     def __init__(self, inputs: List[Operator], predicate, track_prov=False,
-                                         propagate_prov=False, operators: List[Operator] = None,pull=True):
+                 propagate_prov=False, outputs: List[Operator] = None, pull=True,
+                 partition_strategy: PartitionStrategy = PartitionStrategy.RR):
         super(Select, self).__init__(name="Select", track_prov=track_prov,
                                      propagate_prov=propagate_prov,
-                                     operators=operators,
-                                     pull=pull)
+                                     outputs=outputs,
+                                     pull=pull, partition_strategy=partition_strategy)
         # YOUR CODE HERE
         pass
 
