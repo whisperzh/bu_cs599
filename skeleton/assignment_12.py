@@ -51,7 +51,7 @@ class ATuple:
         pass
 
     # Returns the How-provenance of self
-    def how(self) -> string:
+    def how(self) -> str:
         # YOUR CODE HERE (ONLY FOR TASK 3 IN ASSIGNMENT 2)
         pass
 
@@ -141,10 +141,21 @@ class Scan(Operator):
                                    pull=pull,
                                    partition_strategy=partition_strategy)
         # YOUR CODE HERE
+        self.filepath=filepath
+        self.csv_reader=None
+        self.batch_size=100
+        self.batch_index=0
+        self.batches=[]
+        self.title=None
         pass
 
+    # @ray.remote
     # Returns next batch of tuples in given file (or None if file exhausted)
     def get_next(self):
+        self.prepare_data()
+        ans=self.batches[1+self.batch_index*self.batch_size:1+(self.batch_index+1)*self.batch_size]
+        self.batch_index += 1
+        return ans
         # YOUR CODE HERE
         pass
 
@@ -161,6 +172,16 @@ class Scan(Operator):
 
     # Starts the process of reading tuples (only for push-based evaluation)
     def start(self):
+        self.prepare_data()
+        self.get_next()
+        pass
+
+    def prepare_data(self):
+        if self.csv_reader==None:
+            with open(self.filepath,'r') as csvfile:
+                self.csv_reader = csv.reader(csvfile,delimiter=' ')
+                for row in self.csv_reader:
+                    self.batches.append(ATuple(row))
         pass
 
 # Equi-join operator
@@ -170,12 +191,16 @@ class Join(Operator):
     Attributes:
         left_inputs (List): A list of handles to the instances of the operator
         that produces the left input.
+
         right_inputs (List):A list of handles to the instances of the operator
         that produces the right input.
+
         outputs (List): A list of handles to the instances of the next
         operator in the plan.
+
         left_join_attribute (int): The index of the left join attribute.
         right_join_attribute (int): The index of the right join attribute.
+
         track_prov (bool): Defines whether to keep input-to-output
         mappings (True) or not (False).
         propagate_prov (bool): Defines whether to propagate provenance
@@ -202,10 +227,12 @@ class Join(Operator):
                                    pull=pull,
                                    partition_strategy=partition_strategy)
         # YOUR CODE HERE
+
         pass
 
     # Returns next batch of joined tuples (or None if done)
     def get_next(self):
+
         # YOUR CODE HERE
         pass
 
@@ -536,12 +563,16 @@ class Select(Operator):
                                      propagate_prov=propagate_prov,
                                      pull=pull,
                                      partition_strategy=partition_strategy)
+        self.inputs=inputs
+        self.outputs=outputs
+        self.predicate=predicate
         # YOUR CODE HERE
         pass
 
     # Returns next batch of tuples that pass the filter (or None if done)
     def get_next(self):
         # YOUR CODE HERE
+        self.outputs[0].get_next()
         pass
 
     # Applies the operator logic to the given list of tuples
@@ -562,7 +593,8 @@ if __name__ == "__main__":
     #       AND R.MID = 'M'
 
     # YOUR CODE HERE
-
+    scanner=Scan(filepath="friends.txt", outputs=[])
+    scanner.start()
 
     # TASK 2: Implement recommendation query for User A
     #
