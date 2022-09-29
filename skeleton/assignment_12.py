@@ -152,7 +152,7 @@ class Scan(Operator):
         # YOUR CODE HERE
         self.filepath = filepath
         self.csv_reader = None
-        self.batch_size = 100
+        self.batch_size = 2000
         self.batch_index = 0
         self.keys=[]
         self.batches = []
@@ -165,8 +165,11 @@ class Scan(Operator):
             self.prepare_data()
         ans=[]
         ans.append(ATuple(self.keys))
-        ans.append(self.batches[self.batch_index * self.batch_size:(self.batch_index + 1) * self.batch_size])
+        data=self.batches[self.batch_index * self.batch_size:(self.batch_index + 1) * self.batch_size]
+        ans.append(data)
         self.batch_index += 1
+        if len(data)==0:
+            return []
         return ans
         # YOUR CODE HERE
         pass
@@ -246,32 +249,51 @@ class Join(Operator):
         self.right_attri=right_join_attribute
         self.next1=left_inputs[0]
         self.next2=right_inputs[0]
-        self.output=left_inputs[1:]
-        self.output.append(right_inputs[1:])
         pass
 
     # Returns next batch of joined tuples (or None if done)
+
+
     def get_next(self):
         ans=[]
         datal=self.next1.get_next()
-        titlel=datal[0]
-
-        while datal[1]:
+        titleLeft=datal[0].tuple
+        keystoBeProcess=[]
+        while datal:
             datal=datal[1]
-            datal.append(self.next1.get_next())
+            for d in datal:
+                keystoBeProcess.append(d)
+            datal=self.next1.get_next()
 
         datar=self.next2.get_next()
-        titler=datar[0]
-        while datar[1]:
+        titleRight=datar[0].tuple
+        valuestoBeProcess=[]
+        while datar:
             datar=datar[1]
-            datar.append(self.next2.get_next())
-        self.creatHashMap(datal)
-        for t in datar:
-            lef = self.hashmap.get(t[self.right_attri])
+            for d in datar:
+                valuestoBeProcess.append(d)
+            datar = self.next2.get_next()
+
+        leftTitlemap={}
+        rightTitlemap={}
+        for i in range(len(titleLeft)):
+            leftTitlemap[titleLeft[i]]=i
+        for i in range(len(titleRight)):
+            rightTitlemap[titleRight[i]]=i
+
+        self.creatHashMap(keystoBeProcess,leftTitlemap)
+        del titleLeft[leftTitlemap[self.left_attri]]
+        del titleRight[rightTitlemap[self.right_attri]]
+        ans.append(titleLeft+titleRight)
+        ans.append([])
+        for t in valuestoBeProcess:
+            lef = self.hashmap.get(t.tuple[rightTitlemap[self.right_attri]])
+            tmp=[]
             if lef:
-                del lef[self.left_attri]
-                del t[self.right_attri]
-                ans.append(lef + t)
+                del lef[leftTitlemap[self.left_attri]]
+                tmp=t.tuple
+                del tmp[rightTitlemap[self.right_attri]]
+                ans[1].append(ATuple(lef + tmp))
         # YOUR CODE HERE
 
         return ans
@@ -290,20 +312,12 @@ class Join(Operator):
 
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
-        data=[]
-        for t in tuples:
-            lef = self.hashmap.get(t[self.right_attri])
-            if lef:
-                del lef[self.left_attri]
-                del t[self.right_attri]
-                data.append(lef+t)
-
         pass
 
-    def creatHashMap(self,tuples: List[ATuple]):
+    def creatHashMap(self,tuples: List[ATuple],leftmap):
         self.hashmap={}
         for t in tuples:
-            self.hashmap[self.left_join_attribute]=t
+            self.hashmap[t.tuple[leftmap[self.left_attri]]]=t.tuple
         pass
 
 
@@ -721,6 +735,8 @@ class Select(Operator):
         # YOUR CODE HERE
 
         data = self.next_opt.get_next()
+        if len(data)==0:
+            return []
         title=data[0]
         ans=[title]
         ans.append([])
@@ -754,7 +770,7 @@ def query1(pathf,pathr,uid,mid):
 sf=Scan(filepath="../data/friends.txt",outputs=None)
 sr=Scan(filepath="../data/movie_ratings.txt",outputs=None)
 se1=Select(inputs=[sf],predicate={"UID1":'1190'},outputs=None)
-se2=Select(inputs=[sr],predicate={"UID1":'1190'},outputs=None)
+se2=Select(inputs=[sr],predicate={"MID":'16015'},outputs=None)
 join=Join(left_inputs=[se1],right_inputs=[se2],outputs=None,left_join_attribute="UID2",right_join_attribute="UID")
 join.get_next()
 # if __name__ == "__main__":
