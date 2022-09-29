@@ -1,3 +1,4 @@
-k=[1,2,3,4,5,6]
+from .assignment_12 import *
 
-print(k[7:9])
+s=Scan(filepath="../data/friends.txt",)
+se=Select(inputs=[s],prediate={"UID1":"A"})
