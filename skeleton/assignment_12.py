@@ -258,7 +258,11 @@ class Join(Operator):
         ans=[]
         datal=self.next1.get_next()
         titleLeft=datal[0].tuple
+        leftTitlemap={}
+        for i in range(len(titleLeft)):
+            leftTitlemap[titleLeft[i]]=i
         keystoBeProcess=[]
+
         while datal:
             datal=datal[1]
             for d in datal:
@@ -274,23 +278,21 @@ class Join(Operator):
                 valuestoBeProcess.append(d)
             datar = self.next2.get_next()
 
-        leftTitlemap={}
+
         rightTitlemap={}
-        for i in range(len(titleLeft)):
-            leftTitlemap[titleLeft[i]]=i
         for i in range(len(titleRight)):
             rightTitlemap[titleRight[i]]=i
 
-        self.creatHashMap(keystoBeProcess,leftTitlemap)
+        self.creatHashMap(keystoBeProcess,leftTitlemap,self.left_attri)
         del titleLeft[leftTitlemap[self.left_attri]]
         del titleRight[rightTitlemap[self.right_attri]]
-        ans.append(titleLeft+titleRight)
+        ans.append(ATuple(titleLeft+titleRight))
         ans.append([])
+
         for t in valuestoBeProcess:
             lef = self.hashmap.get(t.tuple[rightTitlemap[self.right_attri]])
             tmp=[]
             if lef:
-                del lef[leftTitlemap[self.left_attri]]
                 tmp=t.tuple
                 del tmp[rightTitlemap[self.right_attri]]
                 ans[1].append(ATuple(lef + tmp))
@@ -314,10 +316,12 @@ class Join(Operator):
     def apply(self, tuples: List[ATuple]):
         pass
 
-    def creatHashMap(self,tuples: List[ATuple],leftmap):
+    def creatHashMap(self,tuples: List[ATuple],leftmap,field_to_delete):
         self.hashmap={}
         for t in tuples:
-            self.hashmap[t.tuple[leftmap[self.left_attri]]]=t.tuple
+            key=t.tuple[leftmap[self.left_attri]]
+            del t.tuple[leftmap[field_to_delete]]
+            self.hashmap[key]=t.tuple
         pass
 
 
@@ -366,8 +370,8 @@ class Project(Operator):
     # Return next batch of projected tuples (or None if done)
     def get_next(self):
         data = self.next_opt.get_next()
-        title=data[0]
-        ans=[self.fields_to_keep]
+        title=data[0].tuple
+        ans=[ATuple(self.fields_to_keep)]
         titleMap={}
         for i in range(len(title)):
             titleMap[title[i]]=i
@@ -446,36 +450,44 @@ class GroupBy(Operator):
 
     def AVG(self,data: List[ATuple],key,value):
         dic={}
+        diclen={}
 
-        if key:
+        if key is not None:
+            ans=[]
             for d in data:
                 if dic.get(d.tuple[key]):
                     dic[d.tuple[key]]+=int(d.tuple[value])
+                    diclen[d.tuple[key]] +=1
                 else:
-                    dic[d.tuple[key]]=int([d.tuple[value]])
+                    dic[d.tuple[key]]=int(d.tuple[value])
+                    diclen[d.tuple[key]]=1
+            for k in dic.keys():
+                dic[k]/=diclen[k]
+                ans.append(ATuple([k,dic[k]]))
+            return ans
+
         else:
-            ans = []
             sum=0
             for d in data:
                 sum+=int(d.tuple[0])
             ans=sum/len(data)
-            return ans
+            return [ATuple(ans)]
 
-        return dic
+
         pass
 
     # Returns aggregated value per distinct key in the input (or None if done)
     def get_next(self):
         data=self.next_opt.get_next()
-        title=data[0]
+        title=data[0].tuple
         data=data[1]
         ans=[]
+        ans.append(ATuple(title))
         titleMap={}
         for i in range(len(title)):
             titleMap[title[i]]=i
-
         if self.agg=="AVG":
-            ans=self.AVG(data,self.key,self.value)
+            ans.append(self.AVG(data,titleMap[self.key],titleMap[self.value]))
 
         return ans
         # YOUR CODE HERE
@@ -496,79 +508,6 @@ class GroupBy(Operator):
     def apply(self, tuples: List[ATuple]):
         pass
 
-
-# AVG operator
-class AVG(Operator):
-    """Group-by operator.
-
-    Attributes:
-        inputs (List): A list of handles to the instances of the previous
-        operator in the plan.
-        outputs (List): A list of handles to the instances of the next
-        operator in the plan.
-        key (int): The index of the key to group tuples.
-        value (int): The index of the attribute we want to aggregate.
-        agg_fun (function): The aggregation function (e.g. AVG)
-        track_prov (bool): Defines whether to keep input-to-output
-        mappings (True) or not (False).
-        propagate_prov (bool): Defines whether to propagate provenance
-        annotations (True) or not (False).
-        pull (bool): Defines whether to use pull-based (True) vs
-        push-based (False) evaluation.
-        partition_strategy (Enum): Defines the output partitioning
-        strategy.
-    """
-
-    # Initializes average operator
-    def __init__(self,
-                 inputs: List[Operator],
-                 outputs: List[Operator],
-                 key,
-                 value,
-                 agg_gun,
-                 track_prov=False,
-                 propagate_prov=False,
-                 pull=True,
-                 partition_strategy: PartitionStrategy = PartitionStrategy.RR):
-        super(AVG, self).__init__(name="AVG",
-                                      track_prov=track_prov,
-                                      propagate_prov=propagate_prov,
-                                      pull=pull,
-                                      partition_strategy=partition_strategy)
-        self.sum = 0
-        self.next_opt = input[0]
-        self.output = input[1:]
-        self.key=key
-        self.value=value
-        # YOUR CODE HERE
-        pass
-
-    # Returns aggregated value per distinct key in the input (or None if done)
-    def get_next(self):
-        data=self.next_opt.get_next()
-        for d in data:
-            sum+=d[self.value]
-        return sum/len(data)
-        # YOUR CODE HERE
-        pass
-
-    # Returns the lineage of the given tuples
-    def lineage(self, tuples):
-        # YOUR CODE HERE (ONLY FOR TASK 1 IN ASSIGNMENT 2)
-        pass
-
-    # Returns the where-provenance of the attribute
-    # at index 'att_index' for each tuple in 'tuples'
-    def where(self, att_index, tuples):
-        # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
-        pass
-
-    # Applies the operator logic to the given list of tuples
-    def apply(self, tuples: List[ATuple]):
-        for d in tuples:
-            sum+=d[self.value]
-        return sum/len(tuples)
-        pass
 
 # Custom histogram operator
 class Histogram(Operator):
@@ -655,11 +594,24 @@ class OrderBy(Operator):
                                       propagate_prov=propagate_prov,
                                       pull=pull,
                                       partition_strategy=partition_strategy)
+        self.next_opt=inputs[0]
+        self.comp=comparator
+        self.Asc=ASC
         # YOUR CODE HERE
         pass
 
     # Returns the sorted input (or None if done)
     def get_next(self):
+        data = self.next_opt.get_next()
+        title=data[0].tuple
+        data=data[1]
+        titleMap={}
+        for i in range(len((title))):
+            titleMap[title[i]]=i
+        comp=titleMap[self.comp]
+
+        data.sort(key = lambda  x: x.tuple[comp],reverse=not self.Asc)
+        return [ATuple(title),data]
         # YOUR CODE HERE
         pass
 
@@ -783,9 +735,13 @@ class Select(Operator):
         data = self.next_opt.get_next()
         if len(data)==0:
             return []
+
         title=data[0]
-        ans=[title]
+        ans = [title]
         ans.append([])
+        if self.predicate is None:
+            ans[1]=data[1]
+            return ans
         map={}
         for i in range(len(tuple(title.tuple))):
             map[title.tuple[i]]=i
@@ -803,9 +759,21 @@ class Select(Operator):
 
 def query1(pathf,pathr,uid,mid):
     sf = Scan(filepath=pathf, outputs=None)
-    sr = Scan(filepath="../data/movie_ratings.txt", outputs=None)
-    se1 = Select(inputs=[sf], predicate={"UID1": '1190'}, outputs=None)
-    se2 = Select(inputs=[sr], predicate={"MID": '16015'}, outputs=None)
+    sr = Scan(filepath=pathr, outputs=None)
+    se1 = Select(inputs=[sf], predicate={"UID1": uid}, outputs=None)
+    se2 = Select(inputs=[sr], predicate={"MID": mid}, outputs=None)
+    join = Join(left_inputs=[se1], right_inputs=[se2], outputs=None, left_join_attribute="UID2",
+                right_join_attribute="UID")
+    proj = Project(inputs=[join], outputs=None, fields_to_keep=["Rating"])
+    groupby = GroupBy(inputs=[proj], outputs=None, key="", value="Rating", agg_gun="AVG")
+    groupby.get_next()
+    pass
+
+def query2(pathf,pathr,uid,mid):
+    sf = Scan(filepath=pathf, outputs=None)
+    sr = Scan(filepath=pathr, outputs=None)
+    se1 = Select(inputs=[sf], predicate={"UID1": uid}, outputs=None)
+    se2 = Select(inputs=[sr], predicate={"MID": mid}, outputs=None)
     join = Join(left_inputs=[se1], right_inputs=[se2], outputs=None, left_join_attribute="UID2",
                 right_join_attribute="UID")
     proj = Project(inputs=[join], outputs=None, fields_to_keep=["Rating"])
@@ -817,11 +785,12 @@ def query1(pathf,pathr,uid,mid):
 sf=Scan(filepath="../data/friends.txt",outputs=None)
 sr=Scan(filepath="../data/movie_ratings.txt",outputs=None)
 se1=Select(inputs=[sf],predicate={"UID1":'1190'},outputs=None)
-se2=Select(inputs=[sr],predicate={"MID":'16015'},outputs=None)
+se2=Select(inputs=[sr],predicate=None,outputs=None)
 join=Join(left_inputs=[se1],right_inputs=[se2],outputs=None,left_join_attribute="UID2",right_join_attribute="UID")
-proj=Project(inputs=[join],outputs=None,fields_to_keep=["Rating"])
-groupby=GroupBy(inputs=[proj],outputs=None,key="",value="Rating",agg_gun="AVG")
-groupby.get_next()
+proj=Project(inputs=[join],outputs=None,fields_to_keep=["MID","Rating"])
+groupby=GroupBy(inputs=[proj],outputs=None,key="MID",value="Rating",agg_gun="AVG")
+orderby=OrderBy(inputs=[groupby],outputs=None,comparator="Rating",ASC=False)
+orderby.get_next()
 # if __name__ == "__main__":
 #     logger.info("Assignment #1")
 #
