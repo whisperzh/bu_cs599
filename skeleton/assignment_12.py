@@ -358,15 +358,27 @@ class Project(Operator):
                                       pull=pull,
                                       partition_strategy=partition_strategy)
         # YOUR CODE HERE
-        self.next_opt=input[0]
-        self.output=input[1:]
+        self.next_opt=inputs[0]
         self.fields_to_keep=fields_to_keep
 
         pass
 
     # Return next batch of projected tuples (or None if done)
     def get_next(self):
-        self.next_opt.get_next()
+        data = self.next_opt.get_next()
+        title=data[0]
+        ans=[self.fields_to_keep]
+        titleMap={}
+        for i in range(len(title)):
+            titleMap[title[i]]=i
+        ans.append([])
+        data=data[1]
+        for d in data:
+            item=[]
+            for t in self.fields_to_keep:
+                item.append(d.tuple[titleMap[t]])
+            ans[1].append(ATuple(item))
+        return ans
         # YOUR CODE HERE
         pass
 
@@ -772,7 +784,8 @@ sr=Scan(filepath="../data/movie_ratings.txt",outputs=None)
 se1=Select(inputs=[sf],predicate={"UID1":'1190'},outputs=None)
 se2=Select(inputs=[sr],predicate={"MID":'16015'},outputs=None)
 join=Join(left_inputs=[se1],right_inputs=[se2],outputs=None,left_join_attribute="UID2",right_join_attribute="UID")
-join.get_next()
+proj=Project(inputs=[join],outputs=None,fields_to_keep=["Rating"])
+proj.get_next()
 # if __name__ == "__main__":
 #     logger.info("Assignment #1")
 #
