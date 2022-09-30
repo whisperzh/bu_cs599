@@ -437,13 +437,47 @@ class GroupBy(Operator):
                                       propagate_prov=propagate_prov,
                                       pull=pull,
                                       partition_strategy=partition_strategy)
+        self.next_opt=inputs[0]
+        self.key=key
+        self.value=value
+        self.agg=agg_gun
         # YOUR CODE HERE
         pass
 
+    def AVG(self,data: List[ATuple],key,value):
+        dic={}
 
+        if key:
+            for d in data:
+                if dic.get(d.tuple[key]):
+                    dic[d.tuple[key]]+=int(d.tuple[value])
+                else:
+                    dic[d.tuple[key]]=int([d.tuple[value]])
+        else:
+            ans = []
+            sum=0
+            for d in data:
+                sum+=int(d.tuple[0])
+            ans=sum/len(data)
+            return ans
+
+        return dic
+        pass
 
     # Returns aggregated value per distinct key in the input (or None if done)
     def get_next(self):
+        data=self.next_opt.get_next()
+        title=data[0]
+        data=data[1]
+        ans=[]
+        titleMap={}
+        for i in range(len(title)):
+            titleMap[title[i]]=i
+
+        if self.agg=="AVG":
+            ans=self.AVG(data,self.key,self.value)
+
+        return ans
         # YOUR CODE HERE
         pass
 
@@ -768,14 +802,15 @@ class Select(Operator):
         pass
 
 def query1(pathf,pathr,uid,mid):
-    scanf=Scan(filepath=pathf)
-    scanm=Scan(filepath=pathr)#F.UID1 = 'A' AND R.MID = 'M'
-    selectf=Select(inputs=[scanf],predicate={"UID1":uid})
-    selectm=Select(inputs=[scanm],predicate={"MID",mid})
-    join1=Join(left_inputs=[selectf],right_inputs=[selectm],left_join_attribute="UID2",right_join_attribute="UID")#F.UID2 = R.UID
-    proj=Project(inputs=[join1],fields_to_keep=["Rating"])
-    avg=AVG(inputs=[proj],key="Rating",agg_gun=0)
-    avg.get_next()
+    sf = Scan(filepath=pathf, outputs=None)
+    sr = Scan(filepath="../data/movie_ratings.txt", outputs=None)
+    se1 = Select(inputs=[sf], predicate={"UID1": '1190'}, outputs=None)
+    se2 = Select(inputs=[sr], predicate={"MID": '16015'}, outputs=None)
+    join = Join(left_inputs=[se1], right_inputs=[se2], outputs=None, left_join_attribute="UID2",
+                right_join_attribute="UID")
+    proj = Project(inputs=[join], outputs=None, fields_to_keep=["Rating"])
+    groupby = GroupBy(inputs=[proj], outputs=None, key="", value="Rating", agg_gun="AVG")
+    groupby.get_next()
     pass
 
 
@@ -785,7 +820,8 @@ se1=Select(inputs=[sf],predicate={"UID1":'1190'},outputs=None)
 se2=Select(inputs=[sr],predicate={"MID":'16015'},outputs=None)
 join=Join(left_inputs=[se1],right_inputs=[se2],outputs=None,left_join_attribute="UID2",right_join_attribute="UID")
 proj=Project(inputs=[join],outputs=None,fields_to_keep=["Rating"])
-proj.get_next()
+groupby=GroupBy(inputs=[proj],outputs=None,key="",value="Rating",agg_gun="AVG")
+groupby.get_next()
 # if __name__ == "__main__":
 #     logger.info("Assignment #1")
 #
