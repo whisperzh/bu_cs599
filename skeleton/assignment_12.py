@@ -665,11 +665,18 @@ class TopK(Operator):
                                    propagate_prov=propagate_prov,
                                    pull=pull,
                                    partition_strategy=partition_strategy)
+        self.next_opts=inputs[0]
+        self.k=k
         # YOUR CODE HERE
         pass
 
     # Returns the first k tuples in the input (or None if done)
     def get_next(self):
+        data=self.next_opts.get_next()
+        title=data[0].tuple
+        data=data[1]
+        data=data[0:self.k]
+        return [ATuple(title),data]
         # YOUR CODE HERE
         pass
 
@@ -790,7 +797,8 @@ join=Join(left_inputs=[se1],right_inputs=[se2],outputs=None,left_join_attribute=
 proj=Project(inputs=[join],outputs=None,fields_to_keep=["MID","Rating"])
 groupby=GroupBy(inputs=[proj],outputs=None,key="MID",value="Rating",agg_gun="AVG")
 orderby=OrderBy(inputs=[groupby],outputs=None,comparator="Rating",ASC=False)
-orderby.get_next()
+topk=TopK(inputs=[orderby],outputs=None,k=1)
+topk.get_next()
 # if __name__ == "__main__":
 #     logger.info("Assignment #1")
 #
