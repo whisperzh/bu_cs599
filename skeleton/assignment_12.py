@@ -154,6 +154,7 @@ class Scan(Operator):
         self.csv_reader = None
         self.batch_size = 2000
         self.batch_index = 0
+        self.pushNxt=outputs[0]
         self.keys=[]
         self.batches = []
         self.title = None
@@ -187,8 +188,15 @@ class Scan(Operator):
 
     # Starts the process of reading tuples (only for push-based evaluation)
     def start(self):
-        self.prepare_data()
-        self.get_next()
+        if len(self.batches) == 0:
+            self.prepare_data()
+        ans = []
+        ans.append(ATuple(self.keys))
+        for i in range(0,len(self.batches),self.batch_size):
+            data = self.batches[i:i+self.batch_size]
+            ans[1].append(self.pushNxt.apply(data))
+
+        return ans
         pass
 
     def prepare_data(self):
