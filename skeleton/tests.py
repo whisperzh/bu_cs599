@@ -18,3 +18,7 @@ proj=Project(inputs=[join],outputs=None,fields_to_keep=["MID","Rating"])
 groupby=GroupBy(inputs=[proj],outputs=None,key="MID",value="Rating",agg_gun="AVG")
 orderby=OrderBy(inputs=[groupby],outputs=None,comparator="Rating",ASC=False)
 orderby.get_next()
+
+se1 = Select(inputs=None, predicate={"UID1": '1190'}, outputs=None)
+sf = Scan(filepath="../data/friends.txt", outputs=[se1])
+sf.start()
