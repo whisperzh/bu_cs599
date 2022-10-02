@@ -4,6 +4,7 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
+from matplotlib import pyplot as plt
 import csv
 import logging
 import sys
@@ -652,15 +653,31 @@ class Histogram(Operator):
                                         pull=pull,
                                         partition_strategy=partition_strategy)
         # YOUR CODE HERE
+        if inputs is not None:
+            self.next_opt=inputs[0]
+        if outputs is not  None:
+            self.pushNxt=outputs[0]
         pass
 
     # Returns histogram (or None if done)
     def get_next(self):
         # YOUR CODE HERE
+        data=self.next_opt.get_next()
+        fig, ax = plt.subplots(figsize=(10, 7))
+        ax.hist([x.tuple[0] for x in data[1]])
+
+        # Show plot
+        plt.show()
         pass
 
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
+        # Creating histogram
+        fig, ax = plt.subplots(figsize=(10, 7))
+        ax.hist([x.tuple[0] for x in tuples[1]])
+
+        # Show plot
+        plt.show()
         pass
 
 
@@ -985,6 +1002,13 @@ def query2(pathf, pathr, uid, mid):
     groupby = GroupBy(inputs=[proj], outputs=None, key="", value="Rating", agg_gun="AVG")
     groupby.get_next()
     pass
+
+
+
+
+
+
+
 
 sink= Sink()
 topk = TopK(inputs=None, outputs=[sink], k=1)
