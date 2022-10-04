@@ -358,10 +358,11 @@ class Join(Operator):
 
         if tuples[2] == 'L':  # tuple->keys
             if len(self.keyMapR.keys()) == 0:
-                for left_tuples in tuples[1]:
-                    key = left_tuples.tuple[self.leftTitlemap[self.left_attri]]
-                    del left_tuples.tuple[self.leftTitlemap[self.left_attri]]
-                    self.keyMapL[key] = left_tuples.tuple
+                self.creatHashMap(tuples[1],self.leftTitlemap,self.left_attri,self.left_attri,self.keyMapL)
+                # for left_tuples in tuples[1]:
+                #     key = left_tuples.tuple[self.leftTitlemap[self.left_attri]]
+                #     del left_tuples.tuple[self.leftTitlemap[self.left_attri]]
+                #     self.keyMapL[key] = left_tuples.tuple
 
             else:
                 data = [tuples[0], []]
@@ -380,11 +381,13 @@ class Join(Operator):
         else:
             data = [tuples[0], []]
             for right_tuples in tuples[1]:
-                if self.keyMapL.get(right_tuples.tuple[self.rightTitlemap[self.right_attri]]) is not None:
+                lef = self.keyMapL.get(right_tuples.tuple[self.rightTitlemap[self.right_attri]])
+                tmp = []
+                if lef:
                     key = right_tuples.tuple[self.rightTitlemap[self.right_attri]]
                     del right_tuples.tuple[self.rightTitlemap[self.right_attri]]
                     self.keyMapR[key] = right_tuples.tuple
-                    item = right_tuples.tuple + self.keyMapL[key]
+                    item =  self.keyMapL[key]+right_tuples.tuple
                     data[1].append(ATuple(item))
             data[0] = ATuple(self.outTitleLeft + self.outTitleRight)
             self.pushNxt.apply(data)
@@ -560,11 +563,8 @@ class GroupBy(Operator):
                     dic[d.tuple[key]] += int(d.tuple[value])
                     diclen[d.tuple[key]] += 1
                 else:
-                    try:
-                        dic[d.tuple[key]] = int(d.tuple[value])
-                        diclen[d.tuple[key]] = 1
-                    except:
-                        return
+                    dic[d.tuple[key]] = int(d.tuple[value])
+                    diclen[d.tuple[key]] = 1
             for k in dic.keys():
                 dic[k] /= diclen[k]
                 ans.append(ATuple([k, dic[k]]))
@@ -1056,7 +1056,7 @@ def query2(pull,pathf, pathr, uid, mid,resPath):
         proj = Project(inputs=None, outputs=[gb], fields_to_keep=["MID", "Rating"])
         join = Join(left_inputs=None, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
                     right_join_attribute="UID")
-        se1 = Select(inputs=None, predicate={"UID1": '1190'}, outputs=[join])
+        se1 = Select(inputs=None, predicate={"UID1": uid}, outputs=[join])
         sf = Scan(filepath=pathf, outputs=[se1])
         se2 = Select(inputs=None, predicate=None, outputs=[join])
         sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
@@ -1082,7 +1082,7 @@ def query3(pull,pathf, pathr, uid, mid,resPath):
         proj = Project(inputs=None, outputs=[hist], fields_to_keep=["Rating"])
         join = Join(left_inputs=None, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
                     right_join_attribute="UID")
-        se1 = Select(inputs=None, predicate={"UID1": '1190'}, outputs=[join])
+        se1 = Select(inputs=None, predicate={"UID1": uid}, outputs=[join])
         sf = Scan(filepath=pathf, outputs=[se1])
         se2 = Select(inputs=None, predicate=None, isleft=False,outputs=[join])
         sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
@@ -1105,7 +1105,7 @@ if __name__ == "__main__":
     # YOUR CODE HERE
 
     # query1(False,"../data/friends.txt","../data/movie_ratings.txt",1190,16015,"../data/res.txt")
-    # query2(False,"../data/friends.txt","../data/movie_ratings.txt",1190,None,"../data/res.txt")
+    query2(True,"../data/friends.txt","../data/movie_ratings.txt",5,None,"../data/res.txt")
     #query3(True,"../data/friends.txt","../data/movie_ratings.txt",1190,16015,"../data/res.txt")
 
     parser = argparse.ArgumentParser()
@@ -1120,12 +1120,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.query==1:
-        query1(args.pull,args.ff,args.mf,args.uid,args.mid,args.output)
-    elif args.query==2:
-        query2(args.pull,args.ff,args.mf,args.uid,args.mid,args.output)
-    else:
-        query3(args.pull,args.ff,args.mf,args.uid,args.mid,args.output)
+    # if args.query==1:
+    #     query1(args.pull,args.ff,args.mf,args.uid,args.mid,args.output)
+    # elif args.query==2:
+    #     query2(args.pull,args.ff,args.mf,args.uid,args.mid,args.output)
+    # else:
+    #     query3(args.pull,args.ff,args.mf,args.uid,args.mid,args.output)
 
 
     # TASK 2: Implement recommendation query for User A
