@@ -571,11 +571,14 @@ class GroupBy(Operator):
             return ans
 
         else:
-            sum = 0
-            for d in data:
-                sum += int(d.tuple[0])
-            ans = sum / len(data)
-            return [ATuple(ans)]
+            if len(data) is not 0:
+                sum = 0
+                for d in data:
+                    sum += int(d.tuple[0])
+                ans = sum / len(data)
+                return [ATuple(ans)]
+            else:
+                return []
 
         pass
 
@@ -588,8 +591,7 @@ class GroupBy(Operator):
         titleMap = {}
         createTitleMap(title, titleMap)
         if self.agg == "AVG":
-            ans.append(self.AVG(data, titleMap[self.key], titleMap[self.value]))
-
+            ans.append(self.AVG(data, titleMap.get(self.key,None), titleMap[self.value]))
         return ans
         # YOUR CODE HERE
         pass
@@ -612,7 +614,7 @@ class GroupBy(Operator):
         createTitleMap(title, titleMap)
         ans = [tuples[0]]
         if self.agg == "AVG":
-            ans.append(self.AVG(tuples[1], titleMap[self.key], titleMap[self.value]))
+            ans.append(self.AVG(tuples[1], titleMap.get(self.key,None), titleMap[self.value]))
         self.pushNxt.apply(ans)
         pass
 
@@ -668,6 +670,7 @@ class Histogram(Operator):
 
         # Show plot
         plt.show()
+        return data
         pass
 
     # Applies the operator logic to the given list of tuples
@@ -678,6 +681,7 @@ class Histogram(Operator):
 
         # Show plot
         plt.show()
+        self.pushNxt.apply(tuples)
         pass
 
 
@@ -855,7 +859,9 @@ class Sink(Operator):
 
     # Initializes top-k operator
     def __init__(self,
-
+                 inputs,
+                 outputs,
+                 filepath,
                  track_prov=False,
                  propagate_prov=False,
                  pull=True,
@@ -866,6 +872,11 @@ class Sink(Operator):
                                    pull=pull,
                                    partition_strategy=partition_strategy)
         # YOUR CODE HERE
+        self.fileoutput=filepath
+        if inputs is not None:
+            self.next_opt=inputs[0]
+        if outputs is not None:
+            self.pushNxt=outputs[0]
         pass
 
     # Returns the lineage of the given tuples
@@ -879,10 +890,29 @@ class Sink(Operator):
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
         pass
 
+    def get_next(self) -> List[ATuple]:
+        self.output=self.next_opt.get_next()
+        self.saveAsCsv()
+        pass
+
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
         self.output=tuples
+        self.saveAsCsv()
         pass
+
+    def saveAsCsv(self):
+        f = open(self.fileoutput,'w')
+
+        # create the csv writer
+        writer = csv.writer(f)
+        writer.writerow(self.output[0].tuple)
+        for row in self.output[1]:
+            # write a row to the csv file
+            writer.writerow(row.tuple)
+
+        # close the file
+        f.close()
 
 # Filter operator
 class Select(Operator):
@@ -946,8 +976,8 @@ class Select(Operator):
         createTitleMap(title, map)
         data = data[1]
         for d in data:
-            for k in dict(self.predicate).keys():
-                if d.tuple[map[k]] == self.predicate[k]:
+            for k in self.predicate.keys():
+                if d.tuple[map[k]] == str(self.predicate[k]):
                     ans[1].append(d)
         return ans
         pass
@@ -967,7 +997,7 @@ class Select(Operator):
 
         for d in data:
             for k in dict(self.predicate).keys():
-                if d.tuple[map[k]] == self.predicate[k]:
+                if d.tuple[map[k]] == str(self.predicate[k]):
                     ans[1].append(d)
         self.pushNxt.apply(ans)
         pass
@@ -978,128 +1008,167 @@ def createTitleMap(title, titleMap):
         titleMap[title[i]] = i
 
 
-def query1(pathf, pathr, uid, mid):
-    sf = Scan(filepath=pathf, outputs=None)
-    sr = Scan(filepath=pathr, outputs=None)
-    se1 = Select(inputs=[sf], predicate={"UID1": uid}, outputs=None)
-    se2 = Select(inputs=[sr], predicate={"MID": mid}, outputs=None)
-    join = Join(left_inputs=[se1], right_inputs=[se2], outputs=None, left_join_attribute="UID2",
-                right_join_attribute="UID")
-    proj = Project(inputs=[join], outputs=None, fields_to_keep=["Rating"])
-    groupby = GroupBy(inputs=[proj], outputs=None, key="", value="Rating", agg_gun="AVG")
-    groupby.get_next()
+def query1(pull,pathf, pathr, uid, mid,resPath):
+    if pull:
+        sf = Scan(filepath=pathf, outputs=None)
+        sr = Scan(filepath=pathr, outputs=None)
+        se1 = Select(inputs=[sf], predicate={"UID1": uid}, outputs=None)
+        se2 = Select(inputs=[sr], predicate={"MID": mid}, outputs=None)
+        join = Join(left_inputs=[se1], right_inputs=[se2], outputs=None, left_join_attribute="UID2",
+                    right_join_attribute="UID")
+        proj = Project(inputs=[join], outputs=None, fields_to_keep=["Rating"])
+        groupby = GroupBy(inputs=[proj], outputs=None, key="", value="Rating", agg_gun="AVG")
+        sink=Sink(inputs=[groupby],outputs=None,filepath=resPath)
+        sink.get_next()
+    else:
+        sink = Sink(inputs=None, outputs=None, filepath=resPath)
+        groupby = GroupBy(inputs=None, outputs=[sink], key="", value="Rating", agg_gun="AVG")
+        proj = Project(inputs=None, outputs=[groupby], fields_to_keep=["Rating"])
+        join = Join(left_inputs=None, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
+                    right_join_attribute="UID")
+        se1 = Select(inputs=None, predicate={"UID1": uid}, outputs=[join])
+        sf = Scan(filepath=pathf, outputs=[se1])
+        se2 = Select(inputs=None, predicate={"MID": mid},outputs=[join])
+        sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
+        sf.start()
+        sr.start()
     pass
 
-
-def query2(pathf, pathr, uid, mid):
-    sf = Scan(filepath=pathf, outputs=None)
-    sr = Scan(filepath=pathr, outputs=None)
-    se1 = Select(inputs=[sf], predicate={"UID1": uid}, outputs=None)
-    se2 = Select(inputs=[sr], predicate={"MID": mid}, outputs=None)
-    join = Join(left_inputs=[se1], right_inputs=[se2], outputs=None, left_join_attribute="UID2",
-                right_join_attribute="UID")
-    proj = Project(inputs=[join], outputs=None, fields_to_keep=["Rating"])
-    groupby = GroupBy(inputs=[proj], outputs=None, key="", value="Rating", agg_gun="AVG")
-    groupby.get_next()
+def query2(pull,pathf, pathr, uid, mid,resPath):
+    if pull:
+        sf = Scan(filepath=pathf, outputs=None)
+        sr = Scan(filepath=pathr, outputs=None)
+        se1 = Select(inputs=[sf], predicate={"UID1": uid}, outputs=None)
+        se2 = Select(inputs=[sr], predicate=None, outputs=None)
+        join = Join(left_inputs=[se1], right_inputs=[se2], outputs=None, left_join_attribute="UID2",
+                    right_join_attribute="UID")
+        proj = Project(inputs=[join], outputs=None, fields_to_keep=["MID", "Rating"])
+        groupby = GroupBy(inputs=[proj], outputs=None, key="MID", value="Rating", agg_gun="AVG")
+        orderby = OrderBy(inputs=[groupby], outputs=None, comparator="Rating", ASC=False)
+        topk = TopK(inputs=[orderby], outputs=None, k=1)
+        sink = Sink(inputs=[topk], outputs=None, filepath=resPath)
+        sink.get_next()
+    else:
+        sink = Sink(inputs=None, outputs=None, filepath=resPath)
+        topk = TopK(inputs=None, outputs=[sink], k=1)
+        orderby = OrderBy(inputs=None, outputs=[topk], comparator="Rating", ASC=False)
+        gb = GroupBy(inputs=None, outputs=[orderby], key="MID", value="Rating", agg_gun="AVG")
+        proj = Project(inputs=None, outputs=[gb], fields_to_keep=["MID", "Rating"])
+        join = Join(left_inputs=None, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
+                    right_join_attribute="UID")
+        se1 = Select(inputs=None, predicate={"UID1": '1190'}, outputs=[join])
+        sf = Scan(filepath=pathf, outputs=[se1])
+        se2 = Select(inputs=None, predicate=None, outputs=[join])
+        sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
+        sf.start()
+        sr.start()
     pass
 
+def query3(pull,pathf, pathr, uid, mid,resPath):
+    if pull:
+        sf = Scan(filepath=pathf, outputs=None)
+        sr = Scan(filepath=pathr, outputs=None)
+        se1 = Select(inputs=[sf], predicate={"UID1": uid}, outputs=None)
+        se2 = Select(inputs=[sr], predicate={"MID": mid}, outputs=None)
+        join = Join(left_inputs=[se1], right_inputs=[se2], outputs=None, left_join_attribute="UID2",
+                    right_join_attribute="UID")
+        proj = Project(inputs=[join], outputs=None, fields_to_keep=["Rating"])
+        hist = Histogram(inputs=[proj], outputs=None)
+        sink = Sink(inputs=[hist], outputs=None, filepath=resPath)
+        sink.get_next()
+    else:
+        sink = Sink(inputs=None, outputs=None, filepath=resPath)
+        hist = Histogram(inputs=None, outputs=[sink])
+        proj = Project(inputs=None, outputs=[hist], fields_to_keep=["Rating"])
+        join = Join(left_inputs=None, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
+                    right_join_attribute="UID")
+        se1 = Select(inputs=None, predicate={"UID1": '1190'}, outputs=[join])
+        sf = Scan(filepath=pathf, outputs=[se1])
+        se2 = Select(inputs=None, predicate=None, isleft=False,outputs=[join])
+        sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
+        sf.start()
+        sr.start()
+pass
 
 
+if __name__ == "__main__":
+    logger.info("Assignment #1")
+
+    # TASK 1: Implement 'likeness' prediction query for User A and Movie M
+    #
+    # SELECT AVG(R.Rating)
+    # FROM Friends as F, Ratings as R
+    # WHERE F.UID2 = R.UID
+    #       AND F.UID1 = 'A'
+    #       AND R.MID = 'M'
+
+    # YOUR CODE HERE
+
+    # query1(False,"../data/friends.txt","../data/movie_ratings.txt",1190,16015,"../data/res.txt")
+    # query2(False,"../data/friends.txt","../data/movie_ratings.txt",1190,None,"../data/res.txt")
+    #query3(True,"../data/friends.txt","../data/movie_ratings.txt",1190,16015,"../data/res.txt")
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-q", "--query",type=int, help="task number")
+    parser.add_argument("-f", "--ff", help="filepath")
+    parser.add_argument("-m", "--mf", help="filepath")
+    parser.add_argument("-uid", "--uid", help="uid")
+    parser.add_argument("-mid", "--mid", help="mid")
+    parser.add_argument("-p", "--pull",type=bool ,help="pull")
+    parser.add_argument("-o", "--output", help="filepath")
+
+    args = parser.parse_args()
+
+    if args.query==1:
+        query1(args.pull,args.ff,args.mf,args.uid,args.mid,args.output)
+    elif args.query==2:
+        query2(args.pull,args.ff,args.mf,args.uid,args.mid,args.output)
+    else:
+        query3(args.pull,args.ff,args.mf,args.uid,args.mid,args.output)
 
 
+    # TASK 2: Implement recommendation query for User A
+    #
+    # SELECT R.MID
+    # FROM ( SELECT R.MID, AVG(R.Rating) as score
+    #        FROM Friends as F, Ratings as R
+    #        WHERE F.UID2 = R.UID
+    #              AND F.UID1 = 'A'
+    #        GROUP BY R.MID
+    #        ORDER BY score DESC
+    #        LIMIT 1 )
 
+    # YOUR CODE HERE
 
+    # TASK 3: Implement explanation query for User A and Movie M
+    #
+    # SELECT HIST(R.Rating) as explanation
+    # FROM Friends as F, Ratings as R
+    # WHERE F.UID2 = R.UID
+    #       AND F.UID1 = 'A'
+    #       AND R.MID = 'M'
 
-sink= Sink()
-topk = TopK(inputs=None, outputs=[sink], k=1)
-orderby = OrderBy(inputs=None, outputs=[topk], comparator="Rating", ASC=False)
-gb = GroupBy(inputs=None, outputs=[orderby], key="MID", value="Rating", agg_gun="AVG")
-proj = Project(inputs=None, outputs=[gb], fields_to_keep=["MID", "Rating"])
-join = Join(left_inputs=None, right_inputs=None, outputs=[proj], left_join_attribute="UID2", right_join_attribute="UID")
-se1 = Select(inputs=None, predicate={"UID1": '1190'}, outputs=[join])
-sf = Scan(filepath="../data/friends.txt", outputs=[se1])
-se2 = Select(inputs=None, predicate=None, outputs=[join])
-sr = Scan(filepath="../data/movie_ratings.txt", isleft=False, outputs=[se2])
-sf.start()
-sr.start()
+    # YOUR CODE HERE
 
-sf = Scan(filepath="../data/friends.txt", outputs=None)
-sr = Scan(filepath="../data/movie_ratings.txt", outputs=None)
-se1 = Select(inputs=[sf], predicate={"UID1": '1190'}, outputs=None)
-se2 = Select(inputs=[sr], predicate=None, outputs=None)
-join = Join(left_inputs=[se1], right_inputs=[se2], outputs=None, left_join_attribute="UID2", right_join_attribute="UID")
-proj = Project(inputs=[join], outputs=None, fields_to_keep=["MID", "Rating"])
-groupby = GroupBy(inputs=[proj], outputs=None, key="MID", value="Rating", agg_gun="AVG")
-orderby = OrderBy(inputs=[groupby], outputs=None, comparator="Rating", ASC=False)
-topk = TopK(inputs=[orderby], outputs=None, k=1)
-topk.get_next()
+    # TASK 4: Turn your data operators into Ray actors
+    #
+    # NOTE (john): Add your changes for Task 4 to a new git branch 'ray'
 
-# if __name__ == "__main__":
-#     logger.info("Assignment #1")
-#
-#     # TASK 1: Implement 'likeness' prediction query for User A and Movie M
-#     #
-#     # SELECT AVG(R.Rating)
-#     # FROM Friends as F, Ratings as R
-#     # WHERE F.UID2 = R.UID
-#     #       AND F.UID1 = 'A'
-#     #       AND R.MID = 'M'
-#
-#     # YOUR CODE HERE
-#     query1("../data/friends.txt","../data/movie_ratings.txt","A","M")
-#     parser = argparse.ArgumentParser()
-#
-#     parser.add_argument("-q", "--query", help="task number")
-#     parser.add_argument("-f", "--ff", help="filepath")
-#     parser.add_argument("-m", "--mf", help="filepath")
-#     parser.add_argument("-uid", "--uid", help="uid")
-#     parser.add_argument("-mid", "--mid", help="mid")
-#     parser.add_argument("-p", "--pull", help="pull")
-#     parser.add_argument("-o", "--output", help="filepath")
-#     args = parser.parse_args()
-#
-#
-#     # TASK 2: Implement recommendation query for User A
-#     #
-#     # SELECT R.MID
-#     # FROM ( SELECT R.MID, AVG(R.Rating) as score
-#     #        FROM Friends as F, Ratings as R
-#     #        WHERE F.UID2 = R.UID
-#     #              AND F.UID1 = 'A'
-#     #        GROUP BY R.MID
-#     #        ORDER BY score DESC
-#     #        LIMIT 1 )
-#
-#     # YOUR CODE HERE
-#
-#     # TASK 3: Implement explanation query for User A and Movie M
-#     #
-#     # SELECT HIST(R.Rating) as explanation
-#     # FROM Friends as F, Ratings as R
-#     # WHERE F.UID2 = R.UID
-#     #       AND F.UID1 = 'A'
-#     #       AND R.MID = 'M'
-#
-#     # YOUR CODE HERE
-#
-#     # TASK 4: Turn your data operators into Ray actors
-#     #
-#     # NOTE (john): Add your changes for Task 4 to a new git branch 'ray'
-#
-#     logger.info("Assignment #2")
-#
-#     # TASK 1: Implement lineage query for movie recommendation
-#
-#     # YOUR CODE HERE
-#
-#     # TASK 2: Implement where-provenance query for 'likeness' prediction
-#
-#     # YOUR CODE HERE
-#
-#     # TASK 3: Implement how-provenance query for movie recommendation
-#
-#     # YOUR CODE HERE
-#
-#     # TASK 4: Retrieve most responsible tuples for movie recommendation
-#
-#     # YOUR CODE HERE
+    logger.info("Assignment #2")
+
+    # TASK 1: Implement lineage query for movie recommendation
+
+    # YOUR CODE HERE
+
+    # TASK 2: Implement where-provenance query for 'likeness' prediction
+
+    # YOUR CODE HERE
+
+    # TASK 3: Implement how-provenance query for movie recommendation
+
+    # YOUR CODE HERE
+
+    # TASK 4: Retrieve most responsible tuples for movie recommendation
+
+    # YOUR CODE HERE

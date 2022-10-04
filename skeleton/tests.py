@@ -42,3 +42,7 @@ se2 = Select(inputs=None, predicate=None, outputs=[join])
 sr = Scan(filepath="../data/movie_ratings.txt", isleft=False, outputs=[se2])
 sf.start()
 sr.start()
+
+query1(False,"../data/friends.txt","../data/movie_ratings.txt",1190,16015,"../data/res.txt")
+query2(False,"../data/friends.txt","../data/movie_ratings.txt",1190,None,"../data/res.txt")
+query3(True,"../data/friends.txt","../data/movie_ratings.txt",1190,16015,"../data/res.txt")
