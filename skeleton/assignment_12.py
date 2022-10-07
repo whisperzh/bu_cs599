@@ -576,7 +576,7 @@ class GroupBy(Operator):
                 for d in data:
                     sum += int(d.tuple[0])
                 ans = sum / len(data)
-                return [ATuple(ans)]
+                return [ATuple([ans])]
             else:
                 return []
 
