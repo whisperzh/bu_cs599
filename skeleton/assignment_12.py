@@ -1084,7 +1084,7 @@ def query3(pull,pathf, pathr, uid, mid,resPath):
                     right_join_attribute="UID")
         se1 = Select(inputs=None, predicate={"UID1": uid}, outputs=[join])
         sf = Scan(filepath=pathf, outputs=[se1])
-        se2 = Select(inputs=None, predicate=None, isleft=False,outputs=[join])
+        se2 = Select(inputs=None, predicate={"MID": mid}, isleft=False,outputs=[join])
         sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
         sf.start()
         sr.start()
@@ -1104,8 +1104,8 @@ if __name__ == "__main__":
 
     # YOUR CODE HERE
 
-    # query1(False,"../data/friends.txt","../data/movie_ratings.txt",1190,16015,"../data/res.txt")
-    query2(True,"../data/friends.txt","../data/movie_ratings.txt",5,None,"../data/res.txt")
+    query1(False,"../data/friends.txt","../data/movie_ratings.txt",10,3,"../data/res.txt")
+    #query2(True,"../data/friends.txt","../data/movie_ratings.txt",5,None,"../data/res.txt")
     #query3(True,"../data/friends.txt","../data/movie_ratings.txt",1190,16015,"../data/res.txt")
 
     parser = argparse.ArgumentParser()
