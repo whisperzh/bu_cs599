@@ -665,22 +665,44 @@ class Histogram(Operator):
     def get_next(self):
         # YOUR CODE HERE
         data=self.next_opt.get_next()
-        fig, ax = plt.subplots(figsize=(10, 7))
-        ax.hist([x.tuple[0] for x in data[1]])
-
-        # Show plot
-        plt.show()
+        # fig, ax = plt.subplots(figsize=(10, 7))
+        # ax.hist([x.tuple[0] for x in data[1]])
+        #
+        # # Show plot
+        # plt.show()
+        dic = {}
+        for d in data[1]:
+            key = d.tuple[0]
+            val = dic.get(key, 0)
+            val += 1
+            dic[key] = val
+        tp1 = []
+        for k in dic.keys():
+            tp1.append(ATuple([k, dic[k]]))
+        data[1] = tp1
+        data[0] = ATuple(["Ratings", "amount"])
         return data
         pass
 
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
         # Creating histogram
-        fig, ax = plt.subplots(figsize=(10, 7))
-        ax.hist([x.tuple[0] for x in tuples[1]])
-
-        # Show plot
-        plt.show()
+        # fig, ax = plt.subplots(figsize=(10, 7))
+        # ax.hist([x.tuple[0] for x in tuples[1]])
+        #
+        # # Show plot
+        # plt.show()
+        dic={}
+        for d in tuples[1]:
+            key=d.tuple[0]
+            val=dic.get(key,0)
+            val+=1
+            dic[key]=val
+        tp1=[]
+        for k in dic.keys():
+            tp1.append(ATuple([k,dic[k]]))
+        tuples[1]=tp1
+        tuples[0]=ATuple(["Ratings","amount"])
         self.pushNxt.apply(tuples)
         pass
 
@@ -1104,7 +1126,7 @@ if __name__ == "__main__":
 
     # YOUR CODE HERE
 
-    query1(False,"../data/friends.txt","../data/movie_ratings.txt",10,3,"../data/res.txt")
+    #query1(False,"../data/friends.txt","../data/movie_ratings.txt",10,3,"../data/res.txt")
     #query2(True,"../data/friends.txt","../data/movie_ratings.txt",5,None,"../data/res.txt")
     #query3(True,"../data/friends.txt","../data/movie_ratings.txt",1190,16015,"../data/res.txt")
 
@@ -1120,12 +1142,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # if args.query==1:
-    #     query1(args.pull,args.ff,args.mf,args.uid,args.mid,args.output)
-    # elif args.query==2:
-    #     query2(args.pull,args.ff,args.mf,args.uid,args.mid,args.output)
-    # else:
-    #     query3(args.pull,args.ff,args.mf,args.uid,args.mid,args.output)
+    if args.query==1:
+        query1(args.pull,args.ff,args.mf,args.uid,args.mid,args.output)
+    elif args.query==2:
+        query2(args.pull,args.ff,args.mf,args.uid,args.mid,args.output)
+    elif args.query==3:
+        query3(args.pull,args.ff,args.mf,args.uid,args.mid,args.output)
 
 
     # TASK 2: Implement recommendation query for User A
