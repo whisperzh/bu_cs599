@@ -687,11 +687,6 @@ class Histogram(Operator):
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
         # Creating histogram
-        # fig, ax = plt.subplots(figsize=(10, 7))
-        # ax.hist([x.tuple[0] for x in tuples[1]])
-        #
-        # # Show plot
-        # plt.show()
         dic={}
         for d in tuples[1]:
             key=d.tuple[0]
