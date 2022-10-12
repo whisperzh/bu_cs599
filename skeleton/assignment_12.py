@@ -592,6 +592,8 @@ class GroupBy(Operator):
         createTitleMap(title, titleMap)
         if self.agg == "AVG":
             ans.append(self.AVG(data, titleMap.get(self.key,None), titleMap[self.value]))
+        if self.key is None:
+            ans[0]=ATuple(["Average"])
         return ans
         # YOUR CODE HERE
         pass
@@ -680,7 +682,7 @@ class Histogram(Operator):
         for k in dic.keys():
             tp1.append(ATuple([k, dic[k]]))
         data[1] = tp1
-        data[0] = ATuple(["Ratings", "amount"])
+        data[0] = ATuple(["Rating", "count"])
         return data
         pass
 
@@ -919,10 +921,10 @@ class Sink(Operator):
         pass
 
     def saveAsCsv(self):
-        f = open(self.fileoutput,'w')
+        f = open(self.fileoutput,'w',newline='')
 
         # create the csv writer
-        writer = csv.writer(f)
+        writer = csv.writer(f,delimiter=',')
         writer.writerow(self.output[0].tuple)
         for row in self.output[1]:
             # write a row to the csv file
