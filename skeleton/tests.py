@@ -96,3 +96,10 @@ def test_query3_push():
     sr.start()
     assert sink.output is not None
     pass
+
+# def test_scan_pull():
+#     sf = Scan(filepath=pathf, outputs=None)
+#     a = sf.get_next()
+#     assert sink.output is not None
+#     pass
+

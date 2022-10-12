@@ -358,7 +358,7 @@ class Join(Operator):
 
         if tuples[2] == 'L':  # tuple->keys
             if len(self.keyMapR.keys()) == 0:
-                self.creatHashMap(tuples[1],self.leftTitlemap,self.left_attri,self.left_attri,self.keyMapL)
+                self.creatHashMap(tuples[1], self.leftTitlemap, self.left_attri, self.left_attri, self.keyMapL)
                 # for left_tuples in tuples[1]:
                 #     key = left_tuples.tuple[self.leftTitlemap[self.left_attri]]
                 #     del left_tuples.tuple[self.leftTitlemap[self.left_attri]]
@@ -387,7 +387,7 @@ class Join(Operator):
                     key = right_tuples.tuple[self.rightTitlemap[self.right_attri]]
                     del right_tuples.tuple[self.rightTitlemap[self.right_attri]]
                     self.keyMapR[key] = right_tuples.tuple
-                    item =  self.keyMapL[key]+right_tuples.tuple
+                    item = self.keyMapL[key] + right_tuples.tuple
                     data[1].append(ATuple(item))
             data[0] = ATuple(self.outTitleLeft + self.outTitleRight)
             self.pushNxt.apply(data)
@@ -591,9 +591,9 @@ class GroupBy(Operator):
         titleMap = {}
         createTitleMap(title, titleMap)
         if self.agg == "AVG":
-            ans.append(self.AVG(data, titleMap.get(self.key,None), titleMap[self.value]))
+            ans.append(self.AVG(data, titleMap.get(self.key, None), titleMap[self.value]))
         if self.key is None:
-            ans[0]=ATuple(["Average"])
+            ans[0] = ATuple(["Average"])
         return ans
         # YOUR CODE HERE
         pass
@@ -616,7 +616,7 @@ class GroupBy(Operator):
         createTitleMap(title, titleMap)
         ans = [tuples[0]]
         if self.agg == "AVG":
-            ans.append(self.AVG(tuples[1], titleMap.get(self.key,None), titleMap[self.value]))
+            ans.append(self.AVG(tuples[1], titleMap.get(self.key, None), titleMap[self.value]))
         self.pushNxt.apply(ans)
         pass
 
@@ -658,15 +658,15 @@ class Histogram(Operator):
                                         partition_strategy=partition_strategy)
         # YOUR CODE HERE
         if inputs is not None:
-            self.next_opt=inputs[0]
-        if outputs is not  None:
-            self.pushNxt=outputs[0]
+            self.next_opt = inputs[0]
+        if outputs is not None:
+            self.pushNxt = outputs[0]
         pass
 
     # Returns histogram (or None if done)
     def get_next(self):
         # YOUR CODE HERE
-        data=self.next_opt.get_next()
+        data = self.next_opt.get_next()
         # fig, ax = plt.subplots(figsize=(10, 7))
         # ax.hist([x.tuple[0] for x in data[1]])
         #
@@ -689,17 +689,17 @@ class Histogram(Operator):
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
         # Creating histogram
-        dic={}
+        dic = {}
         for d in tuples[1]:
-            key=d.tuple[0]
-            val=dic.get(key,0)
-            val+=1
-            dic[key]=val
-        tp1=[]
+            key = d.tuple[0]
+            val = dic.get(key, 0)
+            val += 1
+            dic[key] = val
+        tp1 = []
         for k in dic.keys():
-            tp1.append(ATuple([k,dic[k]]))
-        tuples[1]=tp1
-        tuples[0]=ATuple(["Ratings","amount"])
+            tp1.append(ATuple([k, dic[k]]))
+        tuples[1] = tp1
+        tuples[0] = ATuple(["Ratings", "amount"])
         self.pushNxt.apply(tuples)
         pass
 
@@ -856,6 +856,7 @@ class TopK(Operator):
         self.pushNxt.apply([tuples[0], tuples[1][0:self.k]])
         pass
 
+
 # Top-k operator
 class Sink(Operator):
     """TopK operator.
@@ -891,11 +892,11 @@ class Sink(Operator):
                                    pull=pull,
                                    partition_strategy=partition_strategy)
         # YOUR CODE HERE
-        self.fileoutput=filepath
+        self.fileoutput = filepath
         if inputs is not None:
-            self.next_opt=inputs[0]
+            self.next_opt = inputs[0]
         if outputs is not None:
-            self.pushNxt=outputs[0]
+            self.pushNxt = outputs[0]
         pass
 
     # Returns the lineage of the given tuples
@@ -910,21 +911,21 @@ class Sink(Operator):
         pass
 
     def get_next(self) -> List[ATuple]:
-        self.output=self.next_opt.get_next()
+        self.output = self.next_opt.get_next()
         self.saveAsCsv()
         pass
 
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
-        self.output=tuples
+        self.output = tuples
         self.saveAsCsv()
         pass
 
     def saveAsCsv(self):
-        f = open(self.fileoutput,'w',newline='')
+        f = open(self.fileoutput, 'w', newline='')
 
         # create the csv writer
-        writer = csv.writer(f,delimiter=',')
+        writer = csv.writer(f, delimiter=',')
         writer.writerow(self.output[0].tuple)
         for row in self.output[1]:
             # write a row to the csv file
@@ -932,6 +933,7 @@ class Sink(Operator):
 
         # close the file
         f.close()
+
 
 # Filter operator
 class Select(Operator):
@@ -1027,8 +1029,8 @@ def createTitleMap(title, titleMap):
         titleMap[title[i]] = i
 
 
-def query1(pull,pathf, pathr, uid, mid,resPath):
-    if pull:
+def query1(pull, pathf, pathr, uid, mid, resPath):
+    if pull == 1:
         sf = Scan(filepath=pathf, outputs=None)
         sr = Scan(filepath=pathr, outputs=None)
         se1 = Select(inputs=[sf], predicate={"UID1": uid}, outputs=None)
@@ -1037,7 +1039,7 @@ def query1(pull,pathf, pathr, uid, mid,resPath):
                     right_join_attribute="UID")
         proj = Project(inputs=[join], outputs=None, fields_to_keep=["Rating"])
         groupby = GroupBy(inputs=[proj], outputs=None, key="", value="Rating", agg_gun="AVG")
-        sink=Sink(inputs=[groupby],outputs=None,filepath=resPath)
+        sink = Sink(inputs=[groupby], outputs=None, filepath=resPath)
         sink.get_next()
     else:
         sink = Sink(inputs=None, outputs=None, filepath=resPath)
@@ -1047,14 +1049,15 @@ def query1(pull,pathf, pathr, uid, mid,resPath):
                     right_join_attribute="UID")
         se1 = Select(inputs=None, predicate={"UID1": uid}, outputs=[join])
         sf = Scan(filepath=pathf, outputs=[se1])
-        se2 = Select(inputs=None, predicate={"MID": mid},outputs=[join])
+        se2 = Select(inputs=None, predicate={"MID": mid}, outputs=[join])
         sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
         sf.start()
         sr.start()
     pass
 
-def query2(pull,pathf, pathr, uid, mid,resPath):
-    if pull:
+
+def query2(pull, pathf, pathr, uid, mid, resPath):
+    if pull == 1:
         sf = Scan(filepath=pathf, outputs=None)
         sr = Scan(filepath=pathr, outputs=None)
         se1 = Select(inputs=[sf], predicate={"UID1": uid}, outputs=None)
@@ -1065,7 +1068,7 @@ def query2(pull,pathf, pathr, uid, mid,resPath):
         groupby = GroupBy(inputs=[proj], outputs=None, key="MID", value="Rating", agg_gun="AVG")
         orderby = OrderBy(inputs=[groupby], outputs=None, comparator="Rating", ASC=False)
         topk = TopK(inputs=[orderby], outputs=None, k=1)
-        pj=Project(inputs=[topk],outputs=None,fields_to_keep=["MID"])
+        pj = Project(inputs=[topk], outputs=None, fields_to_keep=["MID"])
         sink = Sink(inputs=[pj], outputs=None, filepath=resPath)
         sink.get_next()
     else:
@@ -1085,8 +1088,9 @@ def query2(pull,pathf, pathr, uid, mid,resPath):
         sr.start()
     pass
 
-def query3(pull,pathf, pathr, uid, mid,resPath):
-    if pull:
+
+def query3(pull, pathf, pathr, uid, mid, resPath):
+    if pull == 1:
         sf = Scan(filepath=pathf, outputs=None)
         sr = Scan(filepath=pathr, outputs=None)
         se1 = Select(inputs=[sf], predicate={"UID1": uid}, outputs=None)
@@ -1105,12 +1109,13 @@ def query3(pull,pathf, pathr, uid, mid,resPath):
                     right_join_attribute="UID")
         se1 = Select(inputs=None, predicate={"UID1": uid}, outputs=[join])
         sf = Scan(filepath=pathf, outputs=[se1])
-        se2 = Select(inputs=None, predicate={"MID": mid}, isleft=False,outputs=[join])
+        se2 = Select(inputs=None, predicate={"MID": mid}, isleft=False, outputs=[join])
         sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
         sf.start()
         sr.start()
-pass
 
+
+pass
 
 if __name__ == "__main__":
     logger.info("Assignment #1")
@@ -1125,29 +1130,28 @@ if __name__ == "__main__":
 
     # YOUR CODE HERE
 
-    #query1(False,"../data/friends.txt","../data/movie_ratings.txt",10,3,"../data/res.txt")
-    #query2(True,"../data/friends.txt","../data/movie_ratings.txt",5,None,"../data/res.txt")
-    #query3(True,"../data/friends.txt","../data/movie_ratings.txt",1190,16015,"../data/res.txt")
+    # query1(False,"../data/friends.txt","../data/movie_ratings.txt",10,3,"../data/res.txt")
+    # query2(True,"../data/friends.txt","../data/movie_ratings.txt",5,None,"../data/res.txt")
+    # query3(True,"../data/friends.txt","../data/movie_ratings.txt",1190,16015,"../data/res.txt")
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-q", "--query",type=int, help="task number")
+    parser.add_argument("-q", "--query", type=int, help="task number")
     parser.add_argument("-f", "--ff", help="filepath")
     parser.add_argument("-m", "--mf", help="filepath")
     parser.add_argument("-uid", "--uid", help="uid")
     parser.add_argument("-mid", "--mid", help="mid")
-    parser.add_argument("-p", "--pull",type=bool ,help="pull")
+    parser.add_argument("-p", "--pull", type=bool, help="pull")
     parser.add_argument("-o", "--output", help="filepath")
 
     args = parser.parse_args()
 
-    if args.query==1:
-        query1(args.pull,args.ff,args.mf,args.uid,args.mid,args.output)
-    elif args.query==2:
-        query2(args.pull,args.ff,args.mf,args.uid,args.mid,args.output)
-    elif args.query==3:
-        query3(args.pull,args.ff,args.mf,args.uid,args.mid,args.output)
-
+    if args.query == 1:
+        query1(args.pull, args.ff, args.mf, args.uid, args.mid, args.output)
+    elif args.query == 2:
+        query2(args.pull, args.ff, args.mf, args.uid, args.mid, args.output)
+    elif args.query == 3:
+        query3(args.pull, args.ff, args.mf, args.uid, args.mid, args.output)
 
     # TASK 2: Implement recommendation query for User A
     #
