@@ -306,14 +306,14 @@ class Join(Operator):
 
         rightTitlemap = {}
         createTitleMap(titleRight, rightTitlemap)
-        self.creatHashMap(keystoBeProcess, self.leftTitlemap, self.left_attri, self.left_attri, self.keyMapL)
+        self.creatHashMap(keystoBeProcess, self.leftTitlemap, self.left_attri, self.keyMapL)
+        #!!!!!!!!!
         del titleLeft[self.leftTitlemap[self.left_attri]]
         del titleRight[rightTitlemap[self.right_attri]]
         ans = [ATuple(titleLeft + titleRight), []]
 
         for t in valuestoBeProcess:
             lef = self.keyMapL.get(t.tuple[rightTitlemap[self.right_attri]])
-            tmp = []
             if lef:
                 tmp = t.tuple
                 del tmp[rightTitlemap[self.right_attri]]
@@ -358,7 +358,8 @@ class Join(Operator):
 
         if tuples[2] == 'L':  # tuple->keys
             if len(self.keyMapR.keys()) == 0:
-                self.creatHashMap(tuples[1],self.leftTitlemap,self.left_attri,self.left_attri,self.keyMapL)
+                #!!!!!!!!
+                self.creatHashMap(tuples[1],self.leftTitlemap,self.left_attri,self.keyMapL)
                 # for left_tuples in tuples[1]:
                 #     key = left_tuples.tuple[self.leftTitlemap[self.left_attri]]
                 #     del left_tuples.tuple[self.leftTitlemap[self.left_attri]]
@@ -394,10 +395,9 @@ class Join(Operator):
 
         pass
 
-    def creatHashMap(self, tuples: List[ATuple], titlemap, titleAttri, field_to_delete, pullMap):
+    def creatHashMap(self, tuples: List[ATuple], titlemap, titleAttri, pullMap):
         for t in tuples:
             key = t.tuple[titlemap[titleAttri]]
-            del t.tuple[titlemap[field_to_delete]]
             pullMap[key] = t.tuple
         pass
 
@@ -974,6 +974,9 @@ class Select(Operator):
             self.pushNxt = outputs[0]
         else:
             self.pushNxt = None
+        self.stage=pull
+        self.track_prov=track_prov
+        self.store_lineage=[]
         # YOUR CODE HERE
         pass
 
@@ -999,6 +1002,12 @@ class Select(Operator):
         return ans
         pass
 
+    # Returns the lineage of the given tuples
+    def lineage(self, tuples):
+        return self.store_lineage
+        # YOUR CODE HERE (ONLY FOR TASK 1 IN ASSIGNMENT 2)
+        pass
+
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
         if len(tuples) == 1:
@@ -1015,6 +1024,8 @@ class Select(Operator):
         for d in data:
             for k in dict(self.predicate).keys():
                 if d.tuple[map[k]] == str(self.predicate[k]):
+                    if self.track_prov:
+                        self.store_lineage.append(d)
                     ans[1].append(d)
         self.pushNxt.apply(ans)
         pass
