@@ -188,7 +188,6 @@ def test_pull_project():
         assert t[i].tuple == answer[i]
     pass
 
-
 def test_pull_groupby():
     sf = Scan(filepath=pathf, outputs=None)
     se = Select(inputs=[sf], predicate={"UID1": 1}, outputs=None)
@@ -219,7 +218,7 @@ def test_pull_orderby():
     for i in range(len(answer)):
         assert str(t[i].tuple[0]) == answer[i]
     pass
-#
+
 def test_pull_topk():
     sf = Scan(filepath=pathf, outputs=None)
     se = Select(inputs=[sf], predicate={"UID1": 1}, outputs=None)
