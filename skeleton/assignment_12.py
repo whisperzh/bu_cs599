@@ -153,26 +153,25 @@ class Scan(Operator):
                                    partition_strategy=partition_strategy)
         # YOUR CODE HERE
         self.filepath = filepath
-        self.csv_reader = None
         self.batch_size = 2000
-        self.batch_index = 0
         if outputs is not None:
             self.pushNxt = outputs[0]
         self.keys = []
         self.isLeft = isleft
         self.batches = []
-        self.title = None
+        self.batch_generator = self.reader()
         pass
 
     # Returns next batch of tuples in given file (or None if file exhausted)
     def get_next(self):
-        if len(self.batches) == 0:
-            self.prepare_data()
-        ans = [ATuple(self.keys), []]
-        data = self.batches[self.batch_index * self.batch_size:(self.batch_index + 1) * self.batch_size]
-        ans[1] = data
-        self.batch_index += 1
-        if len(data) == 0:
+        data = []
+        try:
+            data = next(self.batch_generator)
+        except:
+            data = None
+        ans = [ATuple(self.keys), data]
+
+        if data is None:
             return []
         return ans
         # YOUR CODE HERE
@@ -192,7 +191,7 @@ class Scan(Operator):
     # Starts the process of reading tuples (only for push-based evaluation)
     def start(self):
         if len(self.batches) == 0:
-            self.prepare_data()
+            self.reader()
 
         for i in range(0, len(self.batches), self.batch_size):
             # tuples=[ATuple(x) for x in self.batches[i:i + self.batch_size]]
@@ -207,13 +206,29 @@ class Scan(Operator):
 
         pass
 
-    def prepare_data(self):
-        if self.csv_reader == None:
-            with open(self.filepath, 'r') as csvfile:
-                self.csv_reader = csv.reader(csvfile, delimiter=' ')
-                self.keys = self.csv_reader.__next__()[1:]
-                for row in self.csv_reader:
-                    self.batches.append(ATuple(row))
+    def reader(self):
+        with open(self.filepath, 'r') as csvfile:
+            csv_reader = csv.reader(csvfile, delimiter=' ')
+            self.keys = csv_reader.__next__()[1:]
+            count = 0
+            bat = []
+
+            for row in csv_reader:
+                # for i in range(self.batch_size):
+                print(row)
+                if count == self.batch_size:
+                    yield bat
+                    count = 1
+                    bat = [ATuple(tuple(row))]
+                else:
+                    count += 1
+                    bat.append(ATuple(tuple(row)))
+
+            yield bat
+            # except:
+            #     count = 0
+            #     yield bat
+
         pass
 
 
@@ -287,38 +302,32 @@ class Join(Operator):
         titleLeft = datal[0].tuple
         self.leftTitlemap = {}
         createTitleMap(datal[0].tuple, self.leftTitlemap)
-        keystoBeProcess = []
+        # left title
 
         while datal:
             datal = datal[1]
             for d in datal:
-                keystoBeProcess.append(d)
+                key = d.tuple[self.leftTitlemap[self.left_attri]]
+                self.keyMapL[key] = d.tuple
             datal = self.next1.get_next()
+        # get key and map left
 
         datar = self.next2.get_next()
         titleRight = datar[0].tuple
-        valuestoBeProcess = []
+        self.rightTitlemap = {}
+        createTitleMap(titleRight, self.rightTitlemap)
+        # right title
+
+        ans = [ATuple(titleLeft + titleRight), []]
         while datar:
             datar = datar[1]
             for d in datar:
-                valuestoBeProcess.append(d)
+                lef = self.keyMapL.get(d.tuple[self.rightTitlemap[self.right_attri]], None)
+                if lef is not None:
+                    ans[1].append(ATuple(lef + d.tuple))
+
             datar = self.next2.get_next()
-
-        rightTitlemap = {}
-        createTitleMap(titleRight, rightTitlemap)
-        self.creatHashMap(keystoBeProcess, self.leftTitlemap, self.left_attri, self.left_attri, self.keyMapL)
-        del titleLeft[self.leftTitlemap[self.left_attri]]
-        del titleRight[rightTitlemap[self.right_attri]]
-        ans = [ATuple(titleLeft + titleRight), []]
-
-        for t in valuestoBeProcess:
-            lef = self.keyMapL.get(t.tuple[rightTitlemap[self.right_attri]])
-            tmp = []
-            if lef:
-                tmp = t.tuple
-                del tmp[rightTitlemap[self.right_attri]]
-                ans[1].append(ATuple(lef + tmp))
-        # YOUR CODE HERE
+        # do matching
 
         return ans
         pass
@@ -454,15 +463,16 @@ class Project(Operator):
         title = data[0].tuple
         ans = [ATuple(self.fields_to_keep)]
         titleMap = {}
-        for i in range(len(title)):
-            titleMap[title[i]] = i
+        createTitleMap(title,titleMap)
+
         ans.append([])
         data = data[1]
+
         for d in data:
             item = []
             for t in self.fields_to_keep:
                 item.append(d.tuple[titleMap[t]])
-            ans[1].append(ATuple(item))
+            ans[1].append(ATuple(tuple(item)))
         return ans
         # YOUR CODE HERE
         pass
@@ -1133,6 +1143,12 @@ if __name__ == "__main__":
     # query1(False,"../data/friends.txt","../data/movie_ratings.txt",10,3,"../data/res.txt")
     # query2(True,"../data/friends.txt","../data/movie_ratings.txt",5,None,"../data/res.txt")
     # query3(True,"../data/friends.txt","../data/movie_ratings.txt",1190,16015,"../data/res.txt")
+    sf = Scan(filepath="../data/toyf.txt", outputs=None)
+    a = sf.get_next()
+    b = sf.get_next()
+    c = sf.get_next()
+    d = sf.get_next()
+    e = sf.get_next()
 
     parser = argparse.ArgumentParser()
 
