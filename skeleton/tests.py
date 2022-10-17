@@ -1,11 +1,12 @@
 import pytest
-from assignment_12 import Scan,Select,Join,ATuple,Project,GroupBy,Histogram,TopK,OrderBy
+from assignment_12 import Scan, Select, Join, ATuple, Project, GroupBy, Histogram, TopK, OrderBy, Sink
 
 pathf = "../data/toyf.txt"
 pathr = "../data/toym.txt"
 uid = 10
 mid = 3
 resPath = "../data/res.txt"
+
 
 #
 # def test_query1_pull():
@@ -117,32 +118,148 @@ resPath = "../data/res.txt"
 # sink.get_next()
 
 
-# def test_push_scan():
-#     pass
+def test_push_scan():
+    sink = Sink(inputs=None, outputs=None, filepath=resPath)
+    sr = Scan(filepath=pathf, isleft=False, outputs=[sink])
+    sr.start()
+    answer = [('1', '1'), ('2', '4'), ('3', '2')]
+    temp = sink.output[1]
+    for i in range(len(answer)):
+        assert temp[i].tuple == answer[i]
+    pass
+
+
+def test_push_select():
+    sink = Sink(inputs=None, outputs=None, filepath=resPath)
+    se1 = Select(inputs=None, predicate={"UID1": 1}, outputs=[sink])
+    sr = Scan(filepath=pathf, isleft=False, outputs=[se1])
+    sr.start()
+    answer = [('1', '1'), ]
+    temp = sink.output[1]
+    for i in range(len(answer)):
+        assert temp[i].tuple == answer[i]
+    pass
+
+
+def test_push_join():
+    sink = Sink(inputs=None, outputs=None, filepath=resPath)
+    join = Join(left_inputs=None, right_inputs=None, outputs=[sink], left_join_attribute="UID2",
+                right_join_attribute="UID")
+    se1 = Select(inputs=None, predicate={"UID1": 1}, outputs=[join])
+    sf = Scan(filepath=pathf, outputs=[se1])
+    se2 = Select(inputs=None, predicate={"MID": 1}, outputs=[join])
+    sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
+    sf.start()
+    sr.start()
+    answer = [('1', '1', '1', '1', '1'), ]
+    t = sink.output[1]
+    for i in range(len(answer)):
+        assert t[i].tuple == answer[i]
+    pass
+
+
+def test_push_project():
+    sink = Sink(inputs=None, outputs=None, filepath=resPath)
+    proj = Project(inputs=None, outputs=[sink], fields_to_keep=["Rating"])
+    join = Join(left_inputs=None, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
+                right_join_attribute="UID")
+    se1 = Select(inputs=None, predicate={"UID1": 1}, outputs=[join])
+    sf = Scan(filepath=pathf, outputs=[se1])
+    se2 = Select(inputs=None, predicate={"MID": 1}, outputs=[join])
+    sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
+    sf.start()
+    sr.start()
+    answer = [['1', ], ]
+    t = sink.output[1]
+    for i in range(len(answer)):
+        assert t[i].tuple == answer[i]
+
+
+pass
+
+
+def test_push_groupby():
+    sink = Sink(inputs=None, outputs=None, filepath=resPath)
+    groupby = GroupBy(inputs=None, outputs=[sink], key="", value="Rating", agg_gun="AVG")
+    orderby = OrderBy(inputs=None, outputs=[groupby], comparator="Rating", ASC=False)
+    proj = Project(inputs=None, outputs=[orderby], fields_to_keep=["Rating"])
+    join = Join(left_inputs=None, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
+                right_join_attribute="UID")
+    se1 = Select(inputs=None, predicate={"UID1": 1}, outputs=[join])
+    sf = Scan(filepath=pathf, outputs=[se1])
+    se2 = Select(inputs=None, predicate={"MID": 1}, outputs=[join])
+    sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
+    sf.start()
+    sr.start()
+    answer = [[1.0 ], ]
+    t = sink.output[1]
+    for i in range(len(answer)):
+        assert t[i].tuple == answer[i]
+    pass
+
+def test_push_orderby():
+    sink = Sink(inputs=None, outputs=None, filepath=resPath)
+    orderby = OrderBy(inputs=None, outputs=[sink], comparator="Rating", ASC=False)
+    proj = Project(inputs=None, outputs=[orderby], fields_to_keep=["Rating"])
+    join = Join(left_inputs=None, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
+                right_join_attribute="UID")
+    se1 = Select(inputs=None, predicate={"UID1": 1}, outputs=[join])
+    sf = Scan(filepath=pathf, outputs=[se1])
+    se2 = Select(inputs=None, predicate={"MID": 1}, outputs=[join])
+    sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
+    sf.start()
+    sr.start()
+    answer = [['1', ], ]
+    t = sink.output[1]
+    for i in range(len(answer)):
+        assert t[i].tuple == answer[i]
+    pass
+
+
 #
-# def test_push_select():
-#     pass
+def test_push_topk():
+    sink = Sink(inputs=None, outputs=None, filepath=resPath)
+    topk = TopK(inputs=None, outputs=[sink], k=1)
+    orderby = OrderBy(inputs=None, outputs=[topk], comparator="Rating", ASC=False)
+    proj = Project(inputs=None, outputs=[orderby], fields_to_keep=["Rating"])
+    join = Join(left_inputs=None, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
+                right_join_attribute="UID")
+    se1 = Select(inputs=None, predicate={"UID1": 1}, outputs=[join])
+    sf = Scan(filepath=pathf, outputs=[se1])
+    se2 = Select(inputs=None, predicate={"MID": 1}, outputs=[join])
+    sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
+    sf.start()
+    sr.start()
+    answer = [['1', ], ]
+    t = sink.output[1]
+    for i in range(len(answer)):
+        assert t[i].tuple == answer[i]
+    pass
+
+
 #
-# def test_push_join():
-#     pass
-#
-# def test_push_project():
-# pass
-#
-# def test_push_groupby():
-# pass
-#
-# def test_push_orderby():
-# pass
-#
-# def test_push_topk():
-# pass
-#
-# def test_push_hist():
-# pass
-#
-# #——————————
-#
+def test_push_hist():
+    sink = Sink(inputs=None, outputs=None, filepath=resPath)
+    hist = Histogram(inputs=None, outputs=[sink])
+    topk = TopK(inputs=None, outputs=[hist], k=1)
+    proj = Project(inputs=None, outputs=[topk], fields_to_keep=["Rating"])
+    join = Join(left_inputs=None, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
+                right_join_attribute="UID")
+    se1 = Select(inputs=None, predicate={"UID1": 1}, outputs=[join])
+    sf = Scan(filepath=pathf, outputs=[se1])
+    se2 = Select(inputs=None, predicate={"MID": 1}, outputs=[join])
+    sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
+    sf.start()
+    sr.start()
+    answer = ['1', 1]
+    t = sink.output[1][0].tuple
+    assert t==answer
+    pass
+
+
+# ——————————
+
+
 def test_pull_scan():
     sf = Scan(filepath=pathf, outputs=None)
     answer = [('1', '1'), ('2', '4'), ('3', '2')]
@@ -151,6 +268,7 @@ def test_pull_scan():
         assert temp[i].tuple == answer[i]
     pass
 
+
 def test_pull_select():
     sf = Scan(filepath=pathf, outputs=None)
     se = Select(inputs=[sf], predicate={"UID1": 1}, outputs=None)
@@ -158,6 +276,7 @@ def test_pull_select():
     answer = [('1', '1')]
     assert temp[0].tuple == answer[0]
     pass
+
 
 def test_pull_join():
     sf = Scan(filepath=pathf, outputs=None)
@@ -168,10 +287,11 @@ def test_pull_join():
                 right_join_attribute="UID")
 
     answer = [('1', '1', '1', '1', '1')]
-    t=join.get_next()[1]
+    t = join.get_next()[1]
     for i in range(len(answer)):
         assert t[i].tuple == answer[i]
     pass
+
 
 def test_pull_project():
     sf = Scan(filepath=pathf, outputs=None)
@@ -182,11 +302,12 @@ def test_pull_project():
                 right_join_attribute="UID")
     proj = Project(inputs=[join], outputs=None, fields_to_keep=["Rating"])
 
-    answer = [tuple('1'),]
+    answer = [tuple('1'), ]
     t = proj.get_next()[1]
     for i in range(len(answer)):
         assert t[i].tuple == answer[i]
     pass
+
 
 def test_pull_groupby():
     sf = Scan(filepath=pathf, outputs=None)
@@ -197,11 +318,12 @@ def test_pull_groupby():
                 right_join_attribute="UID")
     proj = Project(inputs=[join], outputs=None, fields_to_keep=["Rating"])
     groupby = GroupBy(inputs=[proj], outputs=None, key="", value="Rating", agg_gun="AVG")
-    answer = ['1.0',]
+    answer = ['1.0', ]
     t = groupby.get_next()[1]
     for i in range(len(answer)):
         assert str(t[i].tuple[0]) == answer[i]
     pass
+
 
 def test_pull_orderby():
     sf = Scan(filepath=pathf, outputs=None)
@@ -218,6 +340,7 @@ def test_pull_orderby():
     for i in range(len(answer)):
         assert str(t[i].tuple[0]) == answer[i]
     pass
+
 
 def test_pull_topk():
     sf = Scan(filepath=pathf, outputs=None)
@@ -236,6 +359,7 @@ def test_pull_topk():
         assert str(t[i].tuple[0]) == answer[i]
     pass
 
+
 def test_pull_hist():
     sf = Scan(filepath=pathf, outputs=None)
     se = Select(inputs=[sf], predicate={"UID1": 1}, outputs=None)
@@ -247,12 +371,27 @@ def test_pull_hist():
     groupby = GroupBy(inputs=[proj], outputs=None, key="", value="Rating", agg_gun="AVG")
     orderby = OrderBy(inputs=[groupby], outputs=None, comparator="Rating", ASC=False)
     hist = Histogram(inputs=[orderby], outputs=None)
-    answer = ['1.0', ]
-    t = hist.get_next()[1]
-
-    for i in range(len(answer)):
-        assert str(t[i].tuple[0]) == answer[i]
+    answer = [1.0, 1]
+    t = hist.get_next()[1][0].tuple
+    assert t == answer
     pass
 
-# def test_sink():
-#     pass
+
+def test_sink():
+    sink = Sink(inputs=None, outputs=None, filepath=resPath)
+    topk = TopK(inputs=None, outputs=[sink], k=1)
+    orderby = OrderBy(inputs=None, outputs=[topk], comparator="Rating", ASC=False)
+    proj = Project(inputs=None, outputs=[orderby], fields_to_keep=["Rating"])
+    join = Join(left_inputs=None, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
+                right_join_attribute="UID")
+    se1 = Select(inputs=None, predicate={"UID1": 1}, outputs=[join])
+    sf = Scan(filepath=pathf, outputs=[se1])
+    se2 = Select(inputs=None, predicate={"MID": 1}, outputs=[join])
+    sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
+    sf.start()
+    sr.start()
+    answer = [['1', ], ]
+    t = sink.output[1]
+    for i in range(len(answer)):
+        assert t[i].tuple == answer[i]
+    pass
