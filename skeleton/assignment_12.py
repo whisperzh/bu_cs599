@@ -506,7 +506,7 @@ class Project(Operator):
                 item = []
                 for t in self.fields_to_keep:
                     item.append(d.tuple[titleMap[t]])
-                    ans[1].append(ATuple(item))
+                ans[1].append(ATuple(item))
             self.pushNxt.apply(ans)
         pass
 
@@ -810,6 +810,9 @@ class OrderBy(Operator):
             createTitleMap(self.title, self.titleMap)
             for d in data_raw:
                 self.data.append(d)
+            comp = self.titleMap[self.comp]
+            self.data.sort(key=lambda x: x.tuple[comp], reverse=not self.Asc)
+            self.pushNxt.apply([ATuple(self.title), self.data])
         pass
 
 
@@ -1160,8 +1163,8 @@ if __name__ == "__main__":
     # YOUR CODE HERE
 
     # query1(True,"../data/friends.txt","../data/movie_ratings.txt",10,3,"../data/res.txt")
-    # query2(False,"../data/friends.txt","../data/movie_ratings.txt",5,None,"../data/res.txt")
-    # query3(False,"../data/friends.txt","../data/movie_ratings.txt",1190,16015,"../data/res.txt")
+    # query2(True,"../data/friends.txt","../data/movie_ratings.txt",5,None,"../data/res.txt")
+    # query3(True,"../data/friends.txt","../data/movie_ratings.txt",1190,16015,"../data/res.txt")
 
     parser = argparse.ArgumentParser()
 
