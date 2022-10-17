@@ -204,11 +204,11 @@ class Scan(Operator):
         #     self.pushNxt.apply(data)
         try:
             while True:
-                tag='L'
-                if self.isLeft==False:
-                    tag='R'
-                tuples=next(self.batch_generator)
-                data=[ATuple(self.keys),tuples,tag]
+                tag = 'L'
+                if self.isLeft == False:
+                    tag = 'R'
+                tuples = next(self.batch_generator)
+                data = [ATuple(self.keys), tuples, tag]
                 self.pushNxt.apply(data)
         except:
             self.pushNxt.apply([ATuple(self.keys)])
@@ -300,8 +300,8 @@ class Join(Operator):
         # self.outTitleLeft = []
         # self.outTitleRight = []
         self.pullMap = {}
-        self.titleL=[]
-        self.titleR=[]
+        self.titleL = []
+        self.titleR = []
         pass
 
     # Returns next batch of joined tuples (or None if done)
@@ -366,10 +366,10 @@ class Join(Operator):
         self.rightTitlemap = {}
 
         if tag == 'L':
-            self.titleL=tuples[0].tuple
+            self.titleL = tuples[0].tuple
             createTitleMap(tuples[0].tuple, self.leftTitlemap)
         else:
-            self.titleR=tuples[0].tuple
+            self.titleR = tuples[0].tuple
             createTitleMap(tuples[0].tuple, self.rightTitlemap)
 
         if tuples[2] == 'L':  # tuple->keys
@@ -380,8 +380,8 @@ class Join(Operator):
                 # 1.compare left data with right key
                 # 2.send data to upper ops
                 for left_tuples in tuples[1]:
-                    rig=self.keyMapR.get(left_tuples.tuple[self.leftTitlemap[self.left_attri]],None)
-                    if  rig is not None:
+                    rig = self.keyMapR.get(left_tuples.tuple[self.leftTitlemap[self.left_attri]], None)
+                    if rig is not None:
                         key = left_tuples.tuple[self.leftTitlemap[self.left_attri]]
                         self.keyMapL[key] = left_tuples.tuple
                         item = left_tuples.tuple + rig
@@ -408,6 +408,7 @@ class Join(Operator):
             key = t.tuple[titlemap[titleAttri]]
             pullMap[key] = t.tuple
         pass
+
 
 # Project operator
 class Project(Operator):
@@ -459,7 +460,7 @@ class Project(Operator):
         title = data[0].tuple
         ans = [ATuple(self.fields_to_keep)]
         titleMap = {}
-        createTitleMap(title,titleMap)
+        createTitleMap(title, titleMap)
 
         ans.append([])
         data = data[1]
@@ -492,14 +493,14 @@ class Project(Operator):
         else:
             title = tuples[0].tuple
             data = tuples[1]
-            ans=[[],[]]
+            ans = [[], []]
             titleMap = {}
             if self.fields_to_keep == None:
                 self.pushNxt.apply(tuples)
                 return
-            createTitleMap(title,titleMap)
+            createTitleMap(title, titleMap)
             ans[0] = ATuple(self.fields_to_keep)
-            #schema
+            # schema
 
             for d in data:
                 item = []
@@ -555,7 +556,7 @@ class GroupBy(Operator):
         self.key = key
         self.value = value
         self.agg = agg_gun
-        self.data=[]
+        self.data = []
         # YOUR CODE HERE
         pass
 
@@ -618,7 +619,7 @@ class GroupBy(Operator):
 
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
-        if len(tuples)==1:
+        if len(tuples) == 1:
             ans = [ATuple(self.title), []]
             if self.agg == "AVG":
                 ans[1] = self.AVG(self.data, self.titleMap.get(self.key, None), self.titleMap[self.value])
@@ -677,8 +678,8 @@ class Histogram(Operator):
             self.next_opt = inputs[0]
         if outputs is not None:
             self.pushNxt = outputs[0]
-        self.ans=[]
-        self.data=[]
+        self.ans = []
+        self.data = []
         pass
 
     # Returns histogram (or None if done)
@@ -702,7 +703,7 @@ class Histogram(Operator):
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
         # Creating histogram
-        if len(tuples)==1:
+        if len(tuples) == 1:
             # submit
             dic = {}
             for d in self.data:
@@ -713,7 +714,7 @@ class Histogram(Operator):
             tp1 = []
             for k in dic.keys():
                 tp1.append(ATuple([k, dic[k]]))
-            ans=[ATuple(["Ratings", "amount"]),tp1]
+            ans = [ATuple(["Ratings", "amount"]), tp1]
             self.pushNxt.apply(ans)
         else:
             for d in tuples[1]:
@@ -764,6 +765,7 @@ class OrderBy(Operator):
             self.pushNxt = outputs[0]
         self.comp = comparator
         self.Asc = ASC
+        self.data=[]
         # YOUR CODE HERE
         pass
 
@@ -795,16 +797,19 @@ class OrderBy(Operator):
 
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
-        if len(tuples)==1:
+        if len(tuples) == 1:
+            comp = self.titleMap[self.comp]
+            self.data.sort(key=lambda x: x.tuple[comp], reverse=not self.Asc)
+            self.pushNxt.apply([ATuple(self.title), self.data])
             self.pushNxt.apply(tuples)
             return
-        title = tuples[0].tuple
-        data = tuples[1]
-        titleMap = {}
-        createTitleMap(title, titleMap)
-        comp = titleMap[self.comp]
-        data.sort(key=lambda x: x.tuple[comp], reverse=not self.Asc)
-        self.pushNxt.apply([ATuple(title), data])
+        else:
+            self.title = tuples[0].tuple
+            data_raw = tuples[1]
+            self.titleMap = {}
+            createTitleMap(self.title, self.titleMap)
+            for d in data_raw:
+                self.data.append(d)
         pass
 
 
@@ -873,7 +878,7 @@ class TopK(Operator):
 
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
-        if(len(tuples)==1):
+        if (len(tuples) == 1):
             self.pushNxt.apply(tuples)
         else:
             self.pushNxt.apply([tuples[0], tuples[1][0:self.k]])
@@ -940,7 +945,7 @@ class Sink(Operator):
 
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
-        if len(tuples)>1:
+        if len(tuples) > 1:
             self.output = tuples
             self.saveAsCsv()
         pass
@@ -1161,13 +1166,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-q", "--query", type=int, help="task number")
-    parser.add_argument("-f", "--ff", help="filepath")
-    parser.add_argument("-m", "--mf", help="filepath")
+    parser.add_argument("-f", "--ff", help="filepath", default='../data/friends.txt')
+    parser.add_argument("-m", "--mf", help="filepath", default='../data/movie_ratings.txt')
     parser.add_argument("-uid", "--uid", help="uid")
     parser.add_argument("-mid", "--mid", help="mid")
-    parser.add_argument("-p", "--pull", type=int, help="pull")
-    parser.add_argument("-o", "--output", help="filepath")
-
+    parser.add_argument("-p", "--pull", type=int, default=0, help="pull")
+    parser.add_argument("-o", "--output", help="filepath", default='../data/res.txt')
     args = parser.parse_args()
 
     if args.query == 1:
