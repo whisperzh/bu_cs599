@@ -1165,7 +1165,7 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--mf", help="filepath")
     parser.add_argument("-uid", "--uid", help="uid")
     parser.add_argument("-mid", "--mid", help="mid")
-    parser.add_argument("-p", "--pull", type=bool, help="pull")
+    parser.add_argument("-p", "--pull", type=int, help="pull")
     parser.add_argument("-o", "--output", help="filepath")
 
     args = parser.parse_args()
