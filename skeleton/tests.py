@@ -169,9 +169,12 @@ def test_pull_select():
 
 
 def LINEAGE():
-    sf = Scan(filepath=pathf, outputs=None)
-    se = Select(inputs=[sf], predicate={"UID1": 1}, outputs=None)
-    temp = se.get_next()
+    sink = Sink(inputs=None, outputs=None, track_prov=True,filepath=resPath)
+    se1 = Select(inputs=None, predicate={"UID1": 1}, track_prov=True,outputs=[sink])
+    sr = Scan(filepath=pathf, isleft=False,track_prov=True, outputs=[se1])
+    sr.start()
+
+    temp = sink.[1]
     answer = [('1', '1')]
     temp[0].lineage()
     assert temp[0].tuple == answer[0]

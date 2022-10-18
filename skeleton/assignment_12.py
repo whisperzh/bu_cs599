@@ -69,9 +69,9 @@ class ATuple:
 
     def __hash__(self):
         str_val = ''
-        for i in tuple:
-            str_val = str_val + str(i)
-        return str_val.__hash__()
+        for i in self.tuple:
+            str_val = str_val + '_' + str(i)
+        return str_val
 
 
 # Data operator
@@ -189,7 +189,7 @@ class Scan(Operator):
 
     # Returns the lineage of the given tuples
     def lineage(self, tuples):
-        ans = [self.l_map.get(t, None) for t in tuples]
+        ans = self.l_map.get(tuples.__hash__(), None)
         return ans
         # YOUR CODE HERE (ONLY FOR TASK 1 IN ASSIGNMENT 2)
         pass
@@ -227,12 +227,17 @@ class Scan(Operator):
                 if count == self.batch_size:
                     yield bat
                     count = 1
-                    bat = [ATuple(tuple(row))]
+                    Arow = ATuple(tuple(row))
+                    if self.track_prov:
+                        self.l_map[Arow.__hash__()]=Arow
+                        Arow.operator=self
+                    bat = [Arow]
                 else:
                     count += 1
                     Arow=ATuple(tuple(row))
                     if self.track_prov:
                         self.l_map[Arow.__hash__()]=Arow
+                        Arow.operator=self
                     bat.append(Arow)
 
             yield bat
@@ -954,6 +959,9 @@ class Sink(Operator):
     def apply(self, tuples: List[ATuple]):
         if len(tuples) > 1:
             self.output = tuples
+            if self.track_prov:
+                for t in self.output[1]:
+                    t.operator = self
             self.saveAsCsv()
         pass
 
@@ -1014,6 +1022,8 @@ class Select(Operator):
             self.pushNxt = outputs[0]
         else:
             self.pushNxt = None
+        if track_prov:
+            self.track_prov=track_prov
         # YOUR CODE HERE
         pass
 
@@ -1028,6 +1038,9 @@ class Select(Operator):
         ans = [ATuple(title), []]
         if self.predicate is None:
             ans[1] = data[1]
+            if self.track_prov:
+                for a in ans[1]:
+                    a.operator=self
             return ans
         map = {}
         createTitleMap(title, map)
@@ -1035,6 +1048,8 @@ class Select(Operator):
         for d in data:
             for k in self.predicate.keys():
                 if d.tuple[map[k]] == str(self.predicate[k]):
+                    if self.track_prov:
+                        d.operator=self
                     ans[1].append(d)
         return ans
         pass
@@ -1054,11 +1069,15 @@ class Select(Operator):
         ans = [tuples[0], [], tuples[2]]
         if self.predicate is None:
             ans[1] = data
+            if self.track_prov:
+                for x in ans[1]:
+                    x.operator=self
             return self.pushNxt.apply(ans)
 
         for d in data:
             for k in dict(self.predicate).keys():
                 if d.tuple[map[k]] == str(self.predicate[k]):
+                    d.operator=self
                     ans[1].append(d)
         self.pushNxt.apply(ans)
         pass
