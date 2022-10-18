@@ -167,6 +167,20 @@ def test_pull_select():
     pass
 
 
+
+def LINEAGE():
+    sf = Scan(filepath=pathf, outputs=None)
+    se = Select(inputs=[sf], predicate={"UID1": 1}, outputs=None)
+    temp = se.get_next()
+    answer = [('1', '1')]
+    temp[0].lineage()
+    assert temp[0].tuple == answer[0]
+    pass
+
+
+LINEAGE()
+
+
 def test_pull_join():
     sf = Scan(filepath=pathf, outputs=None)
     se = Select(inputs=[sf], predicate={"UID1": 1}, outputs=None)

@@ -49,6 +49,7 @@ class ATuple:
     # Returns the lineage of self
     def lineage(self) -> List[ATuple]:
         # YOUR CODE HERE (ONLY FOR TASK 1 IN ASSIGNMENT 2)
+        return self.operator.lineage(self)
         pass
 
     # Returns the Where-provenance of the attribute at index 'att_index' of self
@@ -65,6 +66,12 @@ class ATuple:
     def responsible_inputs(self) -> List[Tuple]:
         # YOUR CODE HERE (ONLY FOR TASK 4 IN ASSIGNMENT 2)
         pass
+
+    def __hash__(self):
+        str_val = ''
+        for i in tuple:
+            str_val = str_val + str(i)
+        return str_val.__hash__()
 
 
 # Data operator
@@ -153,26 +160,28 @@ class Scan(Operator):
                                    partition_strategy=partition_strategy)
         # YOUR CODE HERE
         self.filepath = filepath
-        self.csv_reader = None
         self.batch_size = 2000
-        self.batch_index = 0
         if outputs is not None:
             self.pushNxt = outputs[0]
         self.keys = []
         self.isLeft = isleft
         self.batches = []
-        self.title = None
+        self.batch_generator = self.reader()
+        self.track_prov = track_prov
+        if track_prov:
+            self.l_map = {}
         pass
 
     # Returns next batch of tuples in given file (or None if file exhausted)
     def get_next(self):
-        if len(self.batches) == 0:
-            self.prepare_data()
-        ans = [ATuple(self.keys), []]
-        data = self.batches[self.batch_index * self.batch_size:(self.batch_index + 1) * self.batch_size]
-        ans[1] = data
-        self.batch_index += 1
-        if len(data) == 0:
+        data = []
+        try:
+            data = next(self.batch_generator)
+        except:
+            data = None
+        ans = [ATuple(self.keys), data]
+
+        if data is None:
             return []
         return ans
         # YOUR CODE HERE
@@ -180,6 +189,8 @@ class Scan(Operator):
 
     # Returns the lineage of the given tuples
     def lineage(self, tuples):
+        ans = [self.l_map.get(t, None) for t in tuples]
+        return ans
         # YOUR CODE HERE (ONLY FOR TASK 1 IN ASSIGNMENT 2)
         pass
 
@@ -191,29 +202,41 @@ class Scan(Operator):
 
     # Starts the process of reading tuples (only for push-based evaluation)
     def start(self):
-        if len(self.batches) == 0:
-            self.prepare_data()
 
-        for i in range(0, len(self.batches), self.batch_size):
-            # tuples=[ATuple(x) for x in self.batches[i:i + self.batch_size]]
-            tuples = self.batches[i:i + self.batch_size]
-            tag = 'L'
-            if self.isLeft == False:
-                tag = 'R'
-            tmp = self.keys[:]
-            data = [ATuple(tmp), tuples, tag]
-            self.pushNxt.apply(data)
-        self.pushNxt.apply([ATuple(self.keys)])
+        try:
+            while True:
+                tag = 'L'
+                if self.isLeft == False:
+                    tag = 'R'
+                tuples = next(self.batch_generator)
+                data = [ATuple(self.keys), tuples, tag]
+                self.pushNxt.apply(data)
+        except:
+            self.pushNxt.apply([ATuple(self.keys)])
 
         pass
 
-    def prepare_data(self):
-        if self.csv_reader == None:
-            with open(self.filepath, 'r') as csvfile:
-                self.csv_reader = csv.reader(csvfile, delimiter=' ')
-                self.keys = self.csv_reader.__next__()[1:]
-                for row in self.csv_reader:
-                    self.batches.append(ATuple(row))
+    def reader(self):
+        with open(self.filepath, 'r') as csvfile:
+            csv_reader = csv.reader(csvfile, delimiter=' ')
+            self.keys = csv_reader.__next__()[1:]
+            count = 0
+            bat = []
+
+            for row in csv_reader:
+                if count == self.batch_size:
+                    yield bat
+                    count = 1
+                    bat = [ATuple(tuple(row))]
+                else:
+                    count += 1
+                    Arow=ATuple(tuple(row))
+                    if self.track_prov:
+                        self.l_map[Arow.__hash__()]=Arow
+                    bat.append(Arow)
+
+            yield bat
+
         pass
 
 
@@ -275,9 +298,9 @@ class Join(Operator):
         self.keyMapR = {}
         # push based key
 
-        self.outTitleLeft = []
-        self.outTitleRight = []
         self.pullMap = {}
+        self.titleL = []
+        self.titleR = []
         pass
 
     # Returns next batch of joined tuples (or None if done)
@@ -287,38 +310,32 @@ class Join(Operator):
         titleLeft = datal[0].tuple
         self.leftTitlemap = {}
         createTitleMap(datal[0].tuple, self.leftTitlemap)
-        keystoBeProcess = []
+        # left title
 
         while datal:
             datal = datal[1]
             for d in datal:
-                keystoBeProcess.append(d)
+                key = d.tuple[self.leftTitlemap[self.left_attri]]
+                self.keyMapL[key] = d.tuple
             datal = self.next1.get_next()
+        # get key and map left
 
         datar = self.next2.get_next()
         titleRight = datar[0].tuple
-        valuestoBeProcess = []
+        self.rightTitlemap = {}
+        createTitleMap(titleRight, self.rightTitlemap)
+        # right title
+
+        ans = [ATuple(titleLeft + titleRight), []]
         while datar:
             datar = datar[1]
             for d in datar:
-                valuestoBeProcess.append(d)
+                lef = self.keyMapL.get(d.tuple[self.rightTitlemap[self.right_attri]], None)
+                if lef is not None:
+                    ans[1].append(ATuple(lef + d.tuple))
+
             datar = self.next2.get_next()
-
-        rightTitlemap = {}
-        createTitleMap(titleRight, rightTitlemap)
-        self.creatHashMap(keystoBeProcess, self.leftTitlemap, self.left_attri, self.keyMapL)
-        #!!!!!!!!!
-        del titleLeft[self.leftTitlemap[self.left_attri]]
-        del titleRight[rightTitlemap[self.right_attri]]
-        ans = [ATuple(titleLeft + titleRight), []]
-
-        for t in valuestoBeProcess:
-            lef = self.keyMapL.get(t.tuple[rightTitlemap[self.right_attri]])
-            if lef:
-                tmp = t.tuple
-                del tmp[rightTitlemap[self.right_attri]]
-                ans[1].append(ATuple(lef + tmp))
-        # YOUR CODE HERE
+        # do matching
 
         return ans
         pass
@@ -345,57 +362,47 @@ class Join(Operator):
         tag = tuples[2]
 
         self.leftTitlemap = {}
-
         self.rightTitlemap = {}
+
         if tag == 'L':
+            self.titleL = tuples[0].tuple
             createTitleMap(tuples[0].tuple, self.leftTitlemap)
-            self.outTitleLeft = tuples[0].tuple
-            del self.outTitleLeft[self.leftTitlemap[self.left_attri]]
         else:
+            self.titleR = tuples[0].tuple
             createTitleMap(tuples[0].tuple, self.rightTitlemap)
-            self.outTitleRight = tuples[0].tuple
-            del self.outTitleRight[self.rightTitlemap[self.right_attri]]
 
         if tuples[2] == 'L':  # tuple->keys
             if len(self.keyMapR.keys()) == 0:
-                #!!!!!!!!
-                self.creatHashMap(tuples[1],self.leftTitlemap,self.left_attri,self.keyMapL)
-                # for left_tuples in tuples[1]:
-                #     key = left_tuples.tuple[self.leftTitlemap[self.left_attri]]
-                #     del left_tuples.tuple[self.leftTitlemap[self.left_attri]]
-                #     self.keyMapL[key] = left_tuples.tuple
-
+                self.creatHashMap(tuples[1], self.leftTitlemap, self.left_attri, self.left_attri, self.keyMapL)
             else:
                 data = [tuples[0], []]
                 # 1.compare left data with right key
                 # 2.send data to upper ops
                 for left_tuples in tuples[1]:
-                    if self.keyMapR.get(left_tuples.tuple[self.leftTitlemap[self.left_attri]]) is not None:
+                    rig = self.keyMapR.get(left_tuples.tuple[self.leftTitlemap[self.left_attri]], None)
+                    if rig is not None:
                         key = left_tuples.tuple[self.leftTitlemap[self.left_attri]]
-                        del left_tuples.tuple[self.leftTitlemap[self.left_attri]]
-                        self.keyMapL[key] = left_tuples
-                        item = left_tuples.tuple + self.keyMapR[key]
+                        self.keyMapL[key] = left_tuples.tuple
+                        item = left_tuples.tuple + rig
                         data[1].append(ATuple(item))
-                data[0] = ATuple(self.outTitleLeft + self.outTitleRight)
+                data[0] = ATuple(self.titleL + self.titleR)
                 self.pushNxt.apply(data)
 
         else:
             data = [tuples[0], []]
             for right_tuples in tuples[1]:
                 lef = self.keyMapL.get(right_tuples.tuple[self.rightTitlemap[self.right_attri]])
-                tmp = []
                 if lef:
                     key = right_tuples.tuple[self.rightTitlemap[self.right_attri]]
-                    del right_tuples.tuple[self.rightTitlemap[self.right_attri]]
                     self.keyMapR[key] = right_tuples.tuple
-                    item =  self.keyMapL[key]+right_tuples.tuple
+                    item = lef + right_tuples.tuple
                     data[1].append(ATuple(item))
-            data[0] = ATuple(self.outTitleLeft + self.outTitleRight)
+            data[0] = ATuple(self.titleL + self.titleR)
             self.pushNxt.apply(data)
 
         pass
 
-    def creatHashMap(self, tuples: List[ATuple], titlemap, titleAttri, pullMap):
+    def creatHashMap(self, tuples: List[ATuple], titlemap, titleAttri, field_to_delete, pullMap):
         for t in tuples:
             key = t.tuple[titlemap[titleAttri]]
             pullMap[key] = t.tuple
@@ -444,8 +451,6 @@ class Project(Operator):
         self.fields_to_keep = fields_to_keep
         if outputs is not None:
             self.pushNxt = outputs[0]
-        self.ans = [[], []]
-
         pass
 
     # Return next batch of projected tuples (or None if done)
@@ -454,15 +459,16 @@ class Project(Operator):
         title = data[0].tuple
         ans = [ATuple(self.fields_to_keep)]
         titleMap = {}
-        for i in range(len(title)):
-            titleMap[title[i]] = i
+        createTitleMap(title, titleMap)
+
         ans.append([])
         data = data[1]
+
         for d in data:
             item = []
             for t in self.fields_to_keep:
                 item.append(d.tuple[titleMap[t]])
-            ans[1].append(ATuple(item))
+            ans[1].append(ATuple(tuple(item)))
         return ans
         # YOUR CODE HERE
         pass
@@ -481,26 +487,26 @@ class Project(Operator):
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
         if len(tuples) == 1:
-            self.pushNxt.apply(self.ans)
+            self.pushNxt.apply(tuples)
             # do submission
         else:
             title = tuples[0].tuple
             data = tuples[1]
-
+            ans = [[], []]
             titleMap = {}
             if self.fields_to_keep == None:
-                self.ans[0] = ATuple(title)
-                self.ans[1].append(data[:])
+                self.pushNxt.apply(tuples)
                 return
-            self.ans[0] = ATuple(self.fields_to_keep)
-            for i in range(len(title)):
-                titleMap[title[i]] = i
+            createTitleMap(title, titleMap)
+            ans[0] = ATuple(self.fields_to_keep)
+            # schema
+
             for d in data:
                 item = []
                 for t in self.fields_to_keep:
                     item.append(d.tuple[titleMap[t]])
-                self.ans[1].append(ATuple(item))
-
+                ans[1].append(ATuple(item))
+            self.pushNxt.apply(ans)
         pass
 
 
@@ -549,6 +555,7 @@ class GroupBy(Operator):
         self.key = key
         self.value = value
         self.agg = agg_gun
+        self.data = []
         # YOUR CODE HERE
         pass
 
@@ -591,7 +598,9 @@ class GroupBy(Operator):
         titleMap = {}
         createTitleMap(title, titleMap)
         if self.agg == "AVG":
-            ans.append(self.AVG(data, titleMap.get(self.key,None), titleMap[self.value]))
+            ans.append(self.AVG(data, titleMap.get(self.key, None), titleMap[self.value]))
+        if self.key is None:
+            ans[0] = ATuple(["Average"])
         return ans
         # YOUR CODE HERE
         pass
@@ -609,13 +618,22 @@ class GroupBy(Operator):
 
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
-        title = tuples[0].tuple
-        titleMap = {}
-        createTitleMap(title, titleMap)
-        ans = [tuples[0]]
-        if self.agg == "AVG":
-            ans.append(self.AVG(tuples[1], titleMap.get(self.key,None), titleMap[self.value]))
-        self.pushNxt.apply(ans)
+        if len(tuples) == 1:
+            ans = [ATuple(self.title), []]
+            if self.agg == "AVG":
+                ans[1] = self.AVG(self.data, self.titleMap.get(self.key, None), self.titleMap[self.value])
+            self.pushNxt.apply(ans)
+            return
+        # end of file
+
+        else:
+            self.title = tuples[0].tuple
+            self.titleMap = {}
+            createTitleMap(self.title, self.titleMap)
+            for d in tuples[1]:
+                self.data.append(d)
+        return
+
         pass
 
 
@@ -656,20 +674,17 @@ class Histogram(Operator):
                                         partition_strategy=partition_strategy)
         # YOUR CODE HERE
         if inputs is not None:
-            self.next_opt=inputs[0]
-        if outputs is not  None:
-            self.pushNxt=outputs[0]
+            self.next_opt = inputs[0]
+        if outputs is not None:
+            self.pushNxt = outputs[0]
+        self.ans = []
+        self.data = []
         pass
 
     # Returns histogram (or None if done)
     def get_next(self):
         # YOUR CODE HERE
-        data=self.next_opt.get_next()
-        # fig, ax = plt.subplots(figsize=(10, 7))
-        # ax.hist([x.tuple[0] for x in data[1]])
-        #
-        # # Show plot
-        # plt.show()
+        data = self.next_opt.get_next()
         dic = {}
         for d in data[1]:
             key = d.tuple[0]
@@ -680,25 +695,29 @@ class Histogram(Operator):
         for k in dic.keys():
             tp1.append(ATuple([k, dic[k]]))
         data[1] = tp1
-        data[0] = ATuple(["Ratings", "amount"])
+        data[0] = ATuple(["Rating", "count"])
         return data
         pass
 
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
         # Creating histogram
-        dic={}
-        for d in tuples[1]:
-            key=d.tuple[0]
-            val=dic.get(key,0)
-            val+=1
-            dic[key]=val
-        tp1=[]
-        for k in dic.keys():
-            tp1.append(ATuple([k,dic[k]]))
-        tuples[1]=tp1
-        tuples[0]=ATuple(["Ratings","amount"])
-        self.pushNxt.apply(tuples)
+        if len(tuples) == 1:
+            # submit
+            dic = {}
+            for d in self.data:
+                key = d.tuple[0]
+                val = dic.get(key, 0)
+                val += 1
+                dic[key] = val
+            tp1 = []
+            for k in dic.keys():
+                tp1.append(ATuple([k, dic[k]]))
+            ans = [ATuple(["Ratings", "amount"]), tp1]
+            self.pushNxt.apply(ans)
+        else:
+            for d in tuples[1]:
+                self.data.append(d)
         pass
 
 
@@ -745,6 +764,7 @@ class OrderBy(Operator):
             self.pushNxt = outputs[0]
         self.comp = comparator
         self.Asc = ASC
+        self.data = []
         # YOUR CODE HERE
         pass
 
@@ -776,13 +796,22 @@ class OrderBy(Operator):
 
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
-        title = tuples[0].tuple
-        data = tuples[1]
-        titleMap = {}
-        createTitleMap(title, titleMap)
-        comp = titleMap[self.comp]
-        data.sort(key=lambda x: x.tuple[comp], reverse=not self.Asc)
-        self.pushNxt.apply([ATuple(title), data])
+        if len(tuples) == 1:
+            comp = self.titleMap[self.comp]
+            self.data.sort(key=lambda x: x.tuple[comp], reverse=not self.Asc)
+            self.pushNxt.apply([ATuple(self.title), self.data])
+            self.pushNxt.apply(tuples)
+            return
+        else:
+            self.title = tuples[0].tuple
+            data_raw = tuples[1]
+            self.titleMap = {}
+            createTitleMap(self.title, self.titleMap)
+            for d in data_raw:
+                self.data.append(d)
+            comp = self.titleMap[self.comp]
+            self.data.sort(key=lambda x: x.tuple[comp], reverse=not self.Asc)
+            self.pushNxt.apply([ATuple(self.title), self.data])
         pass
 
 
@@ -851,8 +880,12 @@ class TopK(Operator):
 
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
-        self.pushNxt.apply([tuples[0], tuples[1][0:self.k]])
+        if (len(tuples) == 1):
+            self.pushNxt.apply(tuples)
+        else:
+            self.pushNxt.apply([tuples[0], tuples[1][0:self.k]])
         pass
+
 
 # Top-k operator
 class Sink(Operator):
@@ -889,15 +922,17 @@ class Sink(Operator):
                                    pull=pull,
                                    partition_strategy=partition_strategy)
         # YOUR CODE HERE
-        self.fileoutput=filepath
+        self.fileoutput = filepath
         if inputs is not None:
-            self.next_opt=inputs[0]
+            self.next_opt = inputs[0]
         if outputs is not None:
-            self.pushNxt=outputs[0]
+            self.pushNxt = outputs[0]
+        self.track_prov = track_prov
         pass
 
     # Returns the lineage of the given tuples
     def lineage(self, tuples):
+        return self.next_opt.lineage(tuples)
         # YOUR CODE HERE (ONLY FOR TASK 1 IN ASSIGNMENT 2)
         pass
 
@@ -908,21 +943,25 @@ class Sink(Operator):
         pass
 
     def get_next(self) -> List[ATuple]:
-        self.output=self.next_opt.get_next()
+        self.output = self.next_opt.get_next()
+        if self.track_prov:
+            for t in self.output[1]:
+                t.operator = self
         self.saveAsCsv()
         pass
 
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
-        self.output=tuples
-        self.saveAsCsv()
+        if len(tuples) > 1:
+            self.output = tuples
+            self.saveAsCsv()
         pass
 
     def saveAsCsv(self):
-        f = open(self.fileoutput,'w')
+        f = open(self.fileoutput, 'w', newline='')
 
         # create the csv writer
-        writer = csv.writer(f)
+        writer = csv.writer(f, delimiter=',')
         writer.writerow(self.output[0].tuple)
         for row in self.output[1]:
             # write a row to the csv file
@@ -930,6 +969,7 @@ class Sink(Operator):
 
         # close the file
         f.close()
+
 
 # Filter operator
 class Select(Operator):
@@ -974,9 +1014,6 @@ class Select(Operator):
             self.pushNxt = outputs[0]
         else:
             self.pushNxt = None
-        self.stage=pull
-        self.track_prov=track_prov
-        self.store_lineage=[]
         # YOUR CODE HERE
         pass
 
@@ -1002,10 +1039,8 @@ class Select(Operator):
         return ans
         pass
 
-    # Returns the lineage of the given tuples
-    def lineage(self, tuples):
-        return self.store_lineage
-        # YOUR CODE HERE (ONLY FOR TASK 1 IN ASSIGNMENT 2)
+    def lineage(self, tuples: List[ATuple]) -> List[List[ATuple]]:
+        return self.next_opt.lineage(tuples)
         pass
 
     # Applies the operator logic to the given list of tuples
@@ -1024,8 +1059,6 @@ class Select(Operator):
         for d in data:
             for k in dict(self.predicate).keys():
                 if d.tuple[map[k]] == str(self.predicate[k]):
-                    if self.track_prov:
-                        self.store_lineage.append(d)
                     ans[1].append(d)
         self.pushNxt.apply(ans)
         pass
@@ -1036,8 +1069,8 @@ def createTitleMap(title, titleMap):
         titleMap[title[i]] = i
 
 
-def query1(pull,pathf, pathr, uid, mid,resPath):
-    if pull:
+def query1(pull, pathf, pathr, uid, mid, resPath):
+    if pull == 1:
         sf = Scan(filepath=pathf, outputs=None)
         sr = Scan(filepath=pathr, outputs=None)
         se1 = Select(inputs=[sf], predicate={"UID1": uid}, outputs=None)
@@ -1046,7 +1079,7 @@ def query1(pull,pathf, pathr, uid, mid,resPath):
                     right_join_attribute="UID")
         proj = Project(inputs=[join], outputs=None, fields_to_keep=["Rating"])
         groupby = GroupBy(inputs=[proj], outputs=None, key="", value="Rating", agg_gun="AVG")
-        sink=Sink(inputs=[groupby],outputs=None,filepath=resPath)
+        sink = Sink(inputs=[groupby], outputs=None, filepath=resPath)
         sink.get_next()
     else:
         sink = Sink(inputs=None, outputs=None, filepath=resPath)
@@ -1056,14 +1089,15 @@ def query1(pull,pathf, pathr, uid, mid,resPath):
                     right_join_attribute="UID")
         se1 = Select(inputs=None, predicate={"UID1": uid}, outputs=[join])
         sf = Scan(filepath=pathf, outputs=[se1])
-        se2 = Select(inputs=None, predicate={"MID": mid},outputs=[join])
+        se2 = Select(inputs=None, predicate={"MID": mid}, outputs=[join])
         sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
         sf.start()
         sr.start()
     pass
 
-def query2(pull,pathf, pathr, uid, mid,resPath):
-    if pull:
+
+def query2(pull, pathf, pathr, uid, mid, resPath):
+    if pull == 1:
         sf = Scan(filepath=pathf, outputs=None)
         sr = Scan(filepath=pathr, outputs=None)
         se1 = Select(inputs=[sf], predicate={"UID1": uid}, outputs=None)
@@ -1074,7 +1108,7 @@ def query2(pull,pathf, pathr, uid, mid,resPath):
         groupby = GroupBy(inputs=[proj], outputs=None, key="MID", value="Rating", agg_gun="AVG")
         orderby = OrderBy(inputs=[groupby], outputs=None, comparator="Rating", ASC=False)
         topk = TopK(inputs=[orderby], outputs=None, k=1)
-        pj=Project(inputs=[topk],outputs=None,fields_to_keep=["MID"])
+        pj = Project(inputs=[topk], outputs=None, fields_to_keep=["MID"])
         sink = Sink(inputs=[pj], outputs=None, filepath=resPath)
         sink.get_next()
     else:
@@ -1094,8 +1128,9 @@ def query2(pull,pathf, pathr, uid, mid,resPath):
         sr.start()
     pass
 
-def query3(pull,pathf, pathr, uid, mid,resPath):
-    if pull:
+
+def query3(pull, pathf, pathr, uid, mid, resPath):
+    if pull == 1:
         sf = Scan(filepath=pathf, outputs=None)
         sr = Scan(filepath=pathr, outputs=None)
         se1 = Select(inputs=[sf], predicate={"UID1": uid}, outputs=None)
@@ -1114,12 +1149,13 @@ def query3(pull,pathf, pathr, uid, mid,resPath):
                     right_join_attribute="UID")
         se1 = Select(inputs=None, predicate={"UID1": uid}, outputs=[join])
         sf = Scan(filepath=pathf, outputs=[se1])
-        se2 = Select(inputs=None, predicate={"MID": mid}, isleft=False,outputs=[join])
+        se2 = Select(inputs=None, predicate={"MID": mid}, outputs=[join])
         sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
         sf.start()
         sr.start()
-pass
 
+
+pass
 
 if __name__ == "__main__":
     logger.info("Assignment #1")
@@ -1134,29 +1170,27 @@ if __name__ == "__main__":
 
     # YOUR CODE HERE
 
-    #query1(False,"../data/friends.txt","../data/movie_ratings.txt",10,3,"../data/res.txt")
-    #query2(True,"../data/friends.txt","../data/movie_ratings.txt",5,None,"../data/res.txt")
-    #query3(True,"../data/friends.txt","../data/movie_ratings.txt",1190,16015,"../data/res.txt")
+    # query1(True,"../data/friends.txt","../data/movie_ratings.txt",10,3,"../data/res.txt")
+    # query2(True,"../data/friends.txt","../data/movie_ratings.txt",5,None,"../data/res.txt")
+    # query3(True,"../data/friends.txt","../data/movie_ratings.txt",1190,16015,"../data/res.txt")
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-q", "--query",type=int, help="task number")
-    parser.add_argument("-f", "--ff", help="filepath")
-    parser.add_argument("-m", "--mf", help="filepath")
+    parser.add_argument("-q", "--query", type=int, help="task number")
+    parser.add_argument("-f", "--ff", help="filepath", default='../data/friends.txt')
+    parser.add_argument("-m", "--mf", help="filepath", default='../data/movie_ratings.txt')
     parser.add_argument("-uid", "--uid", help="uid")
     parser.add_argument("-mid", "--mid", help="mid")
-    parser.add_argument("-p", "--pull",type=bool ,help="pull")
-    parser.add_argument("-o", "--output", help="filepath")
-
+    parser.add_argument("-p", "--pull", type=int, default=0, help="pull")
+    parser.add_argument("-o", "--output", help="filepath", default='../data/res.txt')
     args = parser.parse_args()
 
-    if args.query==1:
-        query1(args.pull,args.ff,args.mf,args.uid,args.mid,args.output)
-    elif args.query==2:
-        query2(args.pull,args.ff,args.mf,args.uid,args.mid,args.output)
-    elif args.query==3:
-        query3(args.pull,args.ff,args.mf,args.uid,args.mid,args.output)
-
+    if args.query == 1:
+        query1(args.pull, args.ff, args.mf, args.uid, args.mid, args.output)
+    elif args.query == 2:
+        query2(args.pull, args.ff, args.mf, args.uid, args.mid, args.output)
+    elif args.query == 3:
+        query3(args.pull, args.ff, args.mf, args.uid, args.mid, args.output)
 
     # TASK 2: Implement recommendation query for User A
     #
