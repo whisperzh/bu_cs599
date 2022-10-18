@@ -190,18 +190,7 @@ class Scan(Operator):
 
     # Starts the process of reading tuples (only for push-based evaluation)
     def start(self):
-        # if len(self.batches) == 0:
-        #     self.reader()
-        #
-        # for i in range(0, len(self.batches), self.batch_size):
-        #     # tuples=[ATuple(x) for x in self.batches[i:i + self.batch_size]]
-        #     tuples = self.batches[i:i + self.batch_size]
-        #     tag = 'L'
-        #     if self.isLeft == False:
-        #         tag = 'R'
-        #     tmp = self.keys[:]
-        #     data = [ATuple(tmp), tuples, tag]
-        #     self.pushNxt.apply(data)
+
         try:
             while True:
                 tag = 'L'
@@ -232,9 +221,7 @@ class Scan(Operator):
                     bat.append(ATuple(tuple(row)))
 
             yield bat
-            # except:
-            #     count = 0
-            #     yield bat
+
 
         pass
 
@@ -296,9 +283,7 @@ class Join(Operator):
         self.keyMapL = {}
         self.keyMapR = {}
         # push based key
-        #
-        # self.outTitleLeft = []
-        # self.outTitleRight = []
+
         self.pullMap = {}
         self.titleL = []
         self.titleR = []
