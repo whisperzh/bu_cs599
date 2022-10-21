@@ -3,104 +3,107 @@ from assignment_12 import Scan, Select, Join, ATuple, Project, GroupBy, Histogra
 
 pathf = "../data/toyf.txt"
 pathr = "../data/toym.txt"
-uid=10
-mid=3
-resPath="../data/res.txt"
+uid = 10
+mid = 3
+resPath = "../data/res.txt"
+
 
 def test_push_scan():
-    sink = Sink(inputs=None, outputs=None,track_prov=True,pull=False, filepath=resPath)
-    sr = Scan(filepath=pathf, isleft=False,track_prov=True, outputs=[sink])
+    sink = Sink(inputs=None, outputs=None, track_prov=True, pull=False, filepath=resPath)
+    sr = Scan(filepath=pathf, isleft=False, track_prov=True, outputs=[sink])
     sr.start()
     answer = [('1', '1'), ('2', '4'), ('3', '2')]
     temp = sink.output[1]
-    lineage=temp[0].lineage()
-    assert lineage==('1','1')
+    lineage = temp[0].lineage()
+    assert lineage == ('1', '1')
     pass
 
+
 def test_push_select():
-    sink = Sink(inputs=None, outputs=None,track_prov=True, filepath=resPath)
-    se1 = Select(inputs=None, track_prov=True,predicate={"UID1": 1}, outputs=[sink])
-    sr = Scan(filepath=pathf, track_prov=True,isleft=False, outputs=[se1])
+    sink = Sink(inputs=None, outputs=None, track_prov=True, filepath=resPath)
+    se1 = Select(inputs=None, track_prov=True, predicate={"UID1": 1}, outputs=[sink])
+    sr = Scan(filepath=pathf, track_prov=True, isleft=False, outputs=[se1])
     sr.start()
     answer = [('1', '1'), ]
     temp = sink.output[1]
-    lineage=temp[0].lineage()
+    lineage = temp[0].lineage()
     assert lineage == answer[0]
     pass
 
 
 def test_push_join():
-    sink = Sink(inputs=None, outputs=None, track_prov=True,filepath=resPath)
-    join = Join(left_inputs=None, right_inputs=None,track_prov=True, outputs=[sink], left_join_attribute="UID2",
+    sink = Sink(inputs=None, outputs=None, track_prov=True, filepath=resPath)
+    join = Join(left_inputs=None, right_inputs=None, track_prov=True, outputs=[sink], left_join_attribute="UID2",
                 right_join_attribute="UID")
-    se1 = Select(inputs=None, predicate={"UID1": 1},track_prov=True, outputs=[join])
-    sf = Scan(filepath=pathf, track_prov=True,outputs=[se1])
-    se2 = Select(inputs=None, predicate={"MID": 1},track_prov=True, outputs=[join])
-    sr = Scan(filepath=pathr, isleft=False,track_prov=True, outputs=[se2])
+    se1 = Select(inputs=None, predicate={"UID1": 1}, track_prov=True, outputs=[join])
+    sf = Scan(filepath=pathf, track_prov=True, outputs=[se1])
+    se2 = Select(inputs=None, predicate={"MID": 1}, track_prov=True, outputs=[join])
+    sr = Scan(filepath=pathr, isleft=False, track_prov=True, outputs=[se2])
     sf.start()
     sr.start()
-    answer = [('1', '1'),( '1', '1', '1'), ]
+    answer = [('1', '1'), ('1', '1', '1'), ]
     temp = sink.output[1]
     lineage = temp[0].lineage()
     assert lineage == answer
     pass
-test_push_join()
+
 
 def test_push_project():
-    sink = Sink(inputs=None, outputs=None, filepath=resPath)
-    proj = Project(inputs=None, outputs=[sink], fields_to_keep=["Rating"])
-    join = Join(left_inputs=None, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
+    sink = Sink(inputs=None, track_prov=True, outputs=None, filepath=resPath)
+    proj = Project(inputs=None, track_prov=True, outputs=[sink], fields_to_keep=["Rating"])
+    join = Join(left_inputs=None, track_prov=True, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
                 right_join_attribute="UID")
-    se1 = Select(inputs=None, predicate={"UID1": 1}, outputs=[join])
-    sf = Scan(filepath=pathf, outputs=[se1])
-    se2 = Select(inputs=None, predicate={"MID": 1}, outputs=[join])
-    sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
+    se1 = Select(inputs=None, track_prov=True, predicate={"UID1": 1}, outputs=[join])
+    sf = Scan(filepath=pathf, track_prov=True, outputs=[se1])
+    se2 = Select(inputs=None, track_prov=True, predicate={"MID": 1}, outputs=[join])
+    sr = Scan(filepath=pathr, track_prov=True, isleft=False, outputs=[se2])
     sf.start()
     sr.start()
-    answer = [['1', ], ]
-    t = sink.output[1]
-    for i in range(len(answer)):
-        assert t[i].tuple == answer[i]
 
+    answer = [('1', '1'), ('1', '1', '1'), ]
+    temp = sink.output[1]
+    lineage = temp[0].lineage()
+    assert lineage == answer
 
     pass
 
 
 def test_push_groupby():
-    sink = Sink(inputs=None, outputs=None, filepath=resPath)
-    groupby = GroupBy(inputs=None, outputs=[sink], key="", value="Rating", agg_gun="AVG")
-    orderby = OrderBy(inputs=None, outputs=[groupby], comparator="Rating", ASC=False)
-    proj = Project(inputs=None, outputs=[orderby], fields_to_keep=["Rating"])
-    join = Join(left_inputs=None, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
+    sink = Sink(inputs=None, track_prov=True, outputs=None, filepath=resPath)
+    groupby = GroupBy(inputs=None, track_prov=True, outputs=[sink], key="", value="Rating", agg_gun="AVG")
+    proj = Project(inputs=None, track_prov=True, outputs=[groupby], fields_to_keep=["Rating"])
+    join = Join(left_inputs=None, track_prov=True, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
                 right_join_attribute="UID")
-    se1 = Select(inputs=None, predicate={"UID1": 1}, outputs=[join])
-    sf = Scan(filepath=pathf, outputs=[se1])
-    se2 = Select(inputs=None, predicate={"MID": 1}, outputs=[join])
-    sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
+    se1 = Select(inputs=None, track_prov=True, predicate={"UID1": 1}, outputs=[join])
+    sf = Scan(filepath=pathf, track_prov=True, outputs=[se1])
+    se2 = Select(inputs=None, track_prov=True, predicate={"MID": 1}, outputs=[join])
+    sr = Scan(filepath=pathr, track_prov=True, isleft=False, outputs=[se2])
     sf.start()
     sr.start()
-    answer = [[1.0 ], ]
-    t = sink.output[1]
-    for i in range(len(answer)):
-        assert t[i].tuple == answer[i]
+
+    answer = [('1', '1'), ('1', '1', '1'), ]
+    temp = sink.output[1]
+    lineage = temp[0].lineage()
+    assert lineage == answer
     pass
 
+
 def test_push_orderby():
-    sink = Sink(inputs=None, outputs=None, filepath=resPath)
-    orderby = OrderBy(inputs=None, outputs=[sink], comparator="Rating", ASC=False)
-    proj = Project(inputs=None, outputs=[orderby], fields_to_keep=["Rating"])
-    join = Join(left_inputs=None, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
+    sink = Sink(inputs=None, track_prov=True,outputs=None, filepath=resPath)
+    orderby = OrderBy(inputs=None, outputs=[sink],track_prov=True, comparator="Rating", ASC=False)
+    proj = Project(inputs=None, outputs=[orderby], track_prov=True,fields_to_keep=["Rating"])
+    join = Join(left_inputs=None, right_inputs=None, outputs=[proj],track_prov=True, left_join_attribute="UID2",
                 right_join_attribute="UID")
-    se1 = Select(inputs=None, predicate={"UID1": 1}, outputs=[join])
-    sf = Scan(filepath=pathf, outputs=[se1])
-    se2 = Select(inputs=None, predicate={"MID": 1}, outputs=[join])
-    sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
+    se1 = Select(inputs=None, predicate={"UID1": 1},track_prov=True, outputs=[join])
+    sf = Scan(filepath=pathf,track_prov=True, outputs=[se1])
+    se2 = Select(inputs=None, predicate={"MID": 1},track_prov=True, outputs=[join])
+    sr = Scan(filepath=pathr, isleft=False, track_prov=True,outputs=[se2])
     sf.start()
     sr.start()
-    answer = [['1', ], ]
-    t = sink.output[1]
-    for i in range(len(answer)):
-        assert t[i].tuple == answer[i]
+    answer = [('1', '1'), ('1', '1', '1'), ]
+    temp = sink.output[1]
+    lineage = temp[0].lineage()
+    assert lineage == answer
     pass
 
 
@@ -141,7 +144,7 @@ def test_push_hist():
     sr.start()
     answer = ['1', 1]
     t = sink.output[1][0].tuple
-    assert t==answer
+    assert t == answer
     pass
 
 
@@ -149,23 +152,22 @@ def test_push_hist():
 
 
 def test_pull_scan():
-    sf = Scan(filepath=pathf,track_prov=True ,outputs=None)
+    sf = Scan(filepath=pathf, track_prov=True, outputs=None)
     answer = [('1', '1'), ('2', '4'), ('3', '2')]
     temp = sf.get_next()[1]
-    lineage=temp[0].lineage()
+    lineage = temp[0].lineage()
     assert lineage == answer[0]
     pass
 
 
 def test_pull_select():
-    sf = Scan(filepath=pathf,track_prov=True , outputs=None)
-    se = Select(inputs=[sf], track_prov=True ,predicate={"UID1": 1}, outputs=None)
+    sf = Scan(filepath=pathf, track_prov=True, outputs=None)
+    se = Select(inputs=[sf], track_prov=True, predicate={"UID1": 1}, outputs=None)
     temp = se.get_next()[1]
     answer = [('1', '1')]
-    lineage=temp[0].lineage()
+    lineage = temp[0].lineage()
     assert lineage == answer[0]
     pass
-
 
 
 # def LINEAGE():
@@ -185,67 +187,68 @@ def test_pull_select():
 
 
 def test_pull_join():
-    sf = Scan(filepath=pathf, outputs=None,track_prov=True )
-    se = Select(inputs=[sf], predicate={"UID1": 1}, outputs=None,track_prov=True )
-    sr = Scan(filepath=pathr, outputs=None,track_prov=True )
-    se1 = Select(inputs=[sr], predicate={"MID": 1}, outputs=None,track_prov=True )
+    sf = Scan(filepath=pathf, outputs=None, track_prov=True)
+    se = Select(inputs=[sf], predicate={"UID1": 1}, outputs=None, track_prov=True)
+    sr = Scan(filepath=pathr, outputs=None, track_prov=True)
+    se1 = Select(inputs=[sr], predicate={"MID": 1}, outputs=None, track_prov=True)
     join = Join(left_inputs=[se], right_inputs=[se1], outputs=None, left_join_attribute="UID2",
-                right_join_attribute="UID",track_prov=True )
+                right_join_attribute="UID", track_prov=True)
 
-    answer = [('1', '1'),( '1', '1', '1')]
+    answer = [('1', '1'), ('1', '1', '1')]
     t = join.get_next()[1]
     l = t[0].lineage()
-    assert l==answer
+    assert l == answer
     pass
 
 
 def test_pull_project():
-    sf = Scan(filepath=pathf, outputs=None)
-    se = Select(inputs=[sf], predicate={"UID1": 1}, outputs=None)
-    sr = Scan(filepath=pathr, outputs=None)
-    se1 = Select(inputs=[sr], predicate={"MID": 1}, outputs=None)
-    join = Join(left_inputs=[se], right_inputs=[se1], outputs=None, left_join_attribute="UID2",
+    sf = Scan(filepath=pathf, outputs=None, track_prov=True)
+    se = Select(inputs=[sf], predicate={"UID1": 1}, track_prov=True, outputs=None)
+    sr = Scan(filepath=pathr, outputs=None, track_prov=True)
+    se1 = Select(inputs=[sr], predicate={"MID": 1}, outputs=None, track_prov=True)
+    join = Join(left_inputs=[se], right_inputs=[se1], outputs=None, track_prov=True, left_join_attribute="UID2",
                 right_join_attribute="UID")
-    proj = Project(inputs=[join], outputs=None, fields_to_keep=["Rating"])
+    proj = Project(inputs=[join], outputs=None, track_prov=True, fields_to_keep=["Rating"])
 
-    answer = [tuple('1'), ]
+    answer = [('1', '1'), ('1', '1', '1')]
     t = proj.get_next()[1]
-    for i in range(len(answer)):
-        assert t[i].tuple == answer[i]
+    lineage = t[0].lineage()
+    assert lineage == answer
     pass
 
 
 def test_pull_groupby():
-    sf = Scan(filepath=pathf, outputs=None)
-    se = Select(inputs=[sf], predicate={"UID1": 1}, outputs=None)
-    sr = Scan(filepath=pathr, outputs=None)
-    se1 = Select(inputs=[sr], predicate={"MID": 1}, outputs=None)
-    join = Join(left_inputs=[se], right_inputs=[se1], outputs=None, left_join_attribute="UID2",
+    sf = Scan(filepath=pathf, track_prov=True, outputs=None)
+    se = Select(inputs=[sf], track_prov=True, predicate={"UID1": 1}, outputs=None)
+    sr = Scan(filepath=pathr, track_prov=True, outputs=None)
+    se1 = Select(inputs=[sr], track_prov=True, predicate={"MID": 1}, outputs=None)
+    join = Join(left_inputs=[se], track_prov=True, right_inputs=[se1], outputs=None, left_join_attribute="UID2",
                 right_join_attribute="UID")
-    proj = Project(inputs=[join], outputs=None, fields_to_keep=["Rating"])
-    groupby = GroupBy(inputs=[proj], outputs=None, key="", value="Rating", agg_gun="AVG")
-    answer = ['1.0', ]
+    proj = Project(inputs=[join], track_prov=True, outputs=None, fields_to_keep=["Rating"])
+    groupby = GroupBy(inputs=[proj], track_prov=True, outputs=None, key="", value="Rating", agg_gun="AVG")
+    answer = [('1', '1'), ('1', '1', '1')]
     t = groupby.get_next()[1]
-    for i in range(len(answer)):
-        assert str(t[i].tuple[0]) == answer[i]
+    lineage = t[0].lineage()
+    assert lineage == answer
     pass
 
 
 def test_pull_orderby():
-    sf = Scan(filepath=pathf, outputs=None)
-    se = Select(inputs=[sf], predicate={"UID1": 1}, outputs=None)
-    sr = Scan(filepath=pathr, outputs=None)
-    se1 = Select(inputs=[sr], predicate={"MID": 1}, outputs=None)
-    join = Join(left_inputs=[se], right_inputs=[se1], outputs=None, left_join_attribute="UID2",
+    sf = Scan(filepath=pathf, track_prov=True, outputs=None)
+    se = Select(inputs=[sf], predicate={"UID1": 1}, track_prov=True, outputs=None)
+    sr = Scan(filepath=pathr, track_prov=True, outputs=None)
+    se1 = Select(inputs=[sr], predicate={"MID": 1}, track_prov=True, outputs=None)
+    join = Join(left_inputs=[se], right_inputs=[se1], outputs=None, track_prov=True, left_join_attribute="UID2",
                 right_join_attribute="UID")
-    proj = Project(inputs=[join], outputs=None, fields_to_keep=["Rating"])
-    groupby = GroupBy(inputs=[proj], outputs=None, key="", value="Rating", agg_gun="AVG")
-    orderby = OrderBy(inputs=[groupby], outputs=None, comparator="Rating", ASC=False)
-    answer = ['1.0', ]
+    proj = Project(inputs=[join], outputs=None, track_prov=True, fields_to_keep=["Rating"])
+    groupby = GroupBy(inputs=[proj], outputs=None, key="", value="Rating", track_prov=True, agg_gun="AVG")
+    orderby = OrderBy(inputs=[groupby], outputs=None, comparator="Rating", track_prov=True, ASC=False)
+    answer = [('1', '1'), ('1', '1', '1')]
     t = orderby.get_next()[1]
-    for i in range(len(answer)):
-        assert str(t[i].tuple[0]) == answer[i]
+    lineage = t[0].lineage()
+    assert lineage == answer
     pass
+
 
 
 def test_pull_topk():
