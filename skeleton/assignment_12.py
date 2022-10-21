@@ -293,9 +293,9 @@ class Join(Operator):
 
     def get_next(self):
         datal = self.next1.get_next()
-        titleLeft = datal[0].tuple
+        self.titleL=datal[0].tuple
         self.leftTitlemap = {}
-        createTitleMap(datal[0].tuple, self.leftTitlemap)
+        createTitleMap(self.titleL, self.leftTitlemap)
         # left title
 
         while datal:
@@ -307,12 +307,12 @@ class Join(Operator):
         # get key and map left
 
         datar = self.next2.get_next()
-        titleRight = datar[0].tuple
+        self.titleR=datar[0].tuple
         self.rightTitlemap = {}
-        createTitleMap(titleRight, self.rightTitlemap)
+        createTitleMap(self.titleR, self.rightTitlemap)
         # right title
 
-        ans = [ATuple(titleLeft + titleRight), []]
+        ans = [ATuple(self.titleL + self.titleR), []]
         while datar:
             datar = datar[1]
             for d in datar:
@@ -366,11 +366,12 @@ class Join(Operator):
                 # 2.send data to upper ops
                 for left_tuples in tuples[1]:
                     rig = self.keyMapR.get(left_tuples.tuple[self.leftTitlemap[self.left_attri]], None)
+                    key = left_tuples.tuple[self.leftTitlemap[self.left_attri]]
+                    self.keyMapL[key] = left_tuples.tuple
                     if rig is not None:
-                        key = left_tuples.tuple[self.leftTitlemap[self.left_attri]]
-                        self.keyMapL[key] = left_tuples.tuple
-                        item = left_tuples.tuple + rig
-                        data[1].append(ATuple(item))
+                        item = left_tuples.tuple + rig.tuple
+                        Arow=ATuple(item)
+                        data[1].append(Arow)
                 data[0] = ATuple(self.titleL + self.titleR)
                 self.pushNxt.apply(data)
 
@@ -378,11 +379,12 @@ class Join(Operator):
             data = [tuples[0], []]
             for right_tuples in tuples[1]:
                 lef = self.keyMapL.get(right_tuples.tuple[self.rightTitlemap[self.right_attri]])
+                key = right_tuples.tuple[self.rightTitlemap[self.right_attri]]
+                self.keyMapR[key] = right_tuples.tuple
                 if lef:
-                    key = right_tuples.tuple[self.rightTitlemap[self.right_attri]]
-                    self.keyMapR[key] = right_tuples.tuple
-                    item = lef + right_tuples.tuple
-                    data[1].append(ATuple(item))
+                    item = lef.tuple + right_tuples.tuple
+                    Arow=ATuple(item)
+                    data[1].append(Arow)
             data[0] = ATuple(self.titleL + self.titleR)
             self.pushNxt.apply(data)
 
@@ -391,7 +393,7 @@ class Join(Operator):
     def creatHashMap(self, tuples: List[ATuple], titlemap, titleAttri, field_to_delete, pullMap):
         for t in tuples:
             key = t.tuple[titlemap[titleAttri]]
-            pullMap[key] = t.tuple
+            pullMap[key] = t
         pass
 
 
@@ -899,6 +901,7 @@ class Sink(Operator):
                  outputs,
                  filepath,
                  track_prov=False,
+                 block=False,
                  propagate_prov=False,
                  pull=True,
                  partition_strategy: PartitionStrategy = PartitionStrategy.RR):
@@ -913,6 +916,10 @@ class Sink(Operator):
             self.next_opt = inputs[0]
         if outputs is not None:
             self.pushNxt = outputs[0]
+        self.isdone = False
+        self.output=[[],[]]
+
+        self.block = block
         pass
 
     # Returns the lineage of the given tuples
@@ -933,9 +940,19 @@ class Sink(Operator):
 
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
-        if len(tuples) > 1:
-            self.output = tuples
-            self.saveAsCsv()
+        if self.block is False:
+            if len(tuples)>1:
+                self.output = tuples
+                self.isdone = True
+                self.saveAsCsv()
+        else:
+            if len(tuples)>1:
+                self.output[0]=tuples[0]
+                for t in tuples[1]:
+                    self.output[1].append(t)
+            else:
+                self.isdone = True
+                self.saveAsCsv()
         pass
 
     def saveAsCsv(self):
