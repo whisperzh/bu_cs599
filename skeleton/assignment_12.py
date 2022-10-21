@@ -419,7 +419,7 @@ class Join(Operator):
                     item = lef.tuple + right_tuples.tuple
                     Arow=ATuple(item)
                     if self.track_prov:
-                        Arow.operator([lef.operator, right_tuples.operator])
+                        Arow.operator=[lef.operator, right_tuples.operator]
                     data[1].append(Arow)
             data[0] = ATuple(self.titleL + self.titleR)
             self.pushNxt.apply(data)
@@ -937,6 +937,7 @@ class Sink(Operator):
                  outputs,
                  filepath,
                  track_prov=False,
+                 block=False,
                  propagate_prov=False,
                  pull=True,
                  partition_strategy: PartitionStrategy = PartitionStrategy.RR):
@@ -953,7 +954,8 @@ class Sink(Operator):
             self.pushNxt = outputs[0]
         self.track_prov = track_prov
         self.pull=pull
-
+        self.output = [[], []]
+        self.block = block
         pass
 
     # Returns the lineage of the given tuples
@@ -980,9 +982,17 @@ class Sink(Operator):
 
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
-        if len(tuples) > 1:
-            self.output = tuples
-            self.saveAsCsv()
+        if self.block is False:
+            if len(tuples)>1:
+                self.output = tuples
+                self.saveAsCsv()
+        else:
+            if len(tuples)>1:
+                self.output[0]=tuples[0]
+                for t in tuples[1]:
+                    self.output[1].append(t)
+            else:
+                self.saveAsCsv()
         pass
 
     def saveAsCsv(self):
