@@ -49,7 +49,13 @@ class ATuple:
     # Returns the lineage of self
     def lineage(self) -> List[ATuple]:
         # YOUR CODE HERE (ONLY FOR TASK 1 IN ASSIGNMENT 2)
-        return self.operator.lineage(self)
+        try:
+            ans=[]
+            for o in self.operator:
+                ans.append(o.lineage(self))
+            return ans
+        except:
+            return self.operator.lineage(self)
         pass
 
     # Returns the Where-provenance of the attribute at index 'att_index' of self
@@ -229,14 +235,14 @@ class Scan(Operator):
                     count = 1
                     Arow = ATuple(tuple(row))
                     if self.track_prov:
-                        self.l_map[Arow.__hash__()]=Arow
+                        self.l_map[Arow.__hash__()]=Arow.tuple
                         Arow.operator=self
                     bat = [Arow]
                 else:
                     count += 1
                     Arow=ATuple(tuple(row))
                     if self.track_prov:
-                        self.l_map[Arow.__hash__()]=Arow
+                        self.l_map[Arow.__hash__()]=Arow.tuple
                         Arow.operator=self
                     bat.append(Arow)
 
@@ -298,7 +304,7 @@ class Join(Operator):
             self.next2 = right_inputs[0]
         if outputs is not None:
             self.pushNxt = outputs[0]
-
+        self.track_prov=track_prov
         self.keyMapL = {}
         self.keyMapR = {}
         # push based key
@@ -312,9 +318,9 @@ class Join(Operator):
 
     def get_next(self):
         datal = self.next1.get_next()
-        titleLeft = datal[0].tuple
+        self.titleL=datal[0].tuple
         self.leftTitlemap = {}
-        createTitleMap(datal[0].tuple, self.leftTitlemap)
+        createTitleMap(self.titleL, self.leftTitlemap)
         # left title
 
         while datal:
@@ -326,18 +332,21 @@ class Join(Operator):
         # get key and map left
 
         datar = self.next2.get_next()
-        titleRight = datar[0].tuple
+        self.titleR=datar[0].tuple
         self.rightTitlemap = {}
-        createTitleMap(titleRight, self.rightTitlemap)
+        createTitleMap(self.titleR, self.rightTitlemap)
         # right title
 
-        ans = [ATuple(titleLeft + titleRight), []]
+        ans = [ATuple(self.titleL + self.titleR), []]
         while datar:
             datar = datar[1]
             for d in datar:
                 lef = self.keyMapL.get(d.tuple[self.rightTitlemap[self.right_attri]], None)
                 if lef is not None:
-                    ans[1].append(ATuple(lef + d.tuple))
+                    Arow=ATuple(lef + d.tuple)
+                    if self.track_prov:
+                        Arow.operator=self
+                    ans[1].append(Arow)
 
             datar = self.next2.get_next()
         # do matching
@@ -347,6 +356,9 @@ class Join(Operator):
 
     # Returns the lineage of the given tuples
     def lineage(self, tuples):
+        l_t=ATuple(tuples.tuple[0:len(self.titleL)])
+        r_t=ATuple(tuples.tuple[len(self.titleL):])
+        return [self.next1.lineage(l_t),self.next2.lineage(r_t)]
         # YOUR CODE HERE (ONLY FOR TASK 1 IN ASSIGNMENT 2)
         pass
 
@@ -385,23 +397,30 @@ class Join(Operator):
                 # 2.send data to upper ops
                 for left_tuples in tuples[1]:
                     rig = self.keyMapR.get(left_tuples.tuple[self.leftTitlemap[self.left_attri]], None)
+                    key = left_tuples.tuple[self.leftTitlemap[self.left_attri]]
+                    self.keyMapL[key] = left_tuples.tuple
                     if rig is not None:
-                        key = left_tuples.tuple[self.leftTitlemap[self.left_attri]]
-                        self.keyMapL[key] = left_tuples.tuple
-                        item = left_tuples.tuple + rig
-                        data[1].append(ATuple(item))
+                        item = left_tuples.tuple + rig.tuple
+                        Arow=ATuple(item)
+                        if self.track_prov:
+                            Arow.operator([left_tuples.operator,rig.operator])
+                        data[1].append(Arow)
                 data[0] = ATuple(self.titleL + self.titleR)
+
                 self.pushNxt.apply(data)
 
         else:
             data = [tuples[0], []]
             for right_tuples in tuples[1]:
                 lef = self.keyMapL.get(right_tuples.tuple[self.rightTitlemap[self.right_attri]])
+                key = right_tuples.tuple[self.rightTitlemap[self.right_attri]]
+                self.keyMapR[key] = right_tuples.tuple
                 if lef:
-                    key = right_tuples.tuple[self.rightTitlemap[self.right_attri]]
-                    self.keyMapR[key] = right_tuples.tuple
-                    item = lef + right_tuples.tuple
-                    data[1].append(ATuple(item))
+                    item = lef.tuple + right_tuples.tuple
+                    Arow=ATuple(item)
+                    if self.track_prov:
+                        Arow.operator([lef.operator, right_tuples.operator])
+                    data[1].append(Arow)
             data[0] = ATuple(self.titleL + self.titleR)
             self.pushNxt.apply(data)
 
@@ -410,7 +429,7 @@ class Join(Operator):
     def creatHashMap(self, tuples: List[ATuple], titlemap, titleAttri, field_to_delete, pullMap):
         for t in tuples:
             key = t.tuple[titlemap[titleAttri]]
-            pullMap[key] = t.tuple
+            pullMap[key] = t
         pass
 
 
@@ -933,11 +952,15 @@ class Sink(Operator):
         if outputs is not None:
             self.pushNxt = outputs[0]
         self.track_prov = track_prov
+        self.pull=pull
+
         pass
 
     # Returns the lineage of the given tuples
     def lineage(self, tuples):
-        return self.next_opt.lineage(tuples)
+        if self.pull:
+            return self.next_opt.lineage(tuples)
+        return self.pushNxt.lineage(tuples)
         # YOUR CODE HERE (ONLY FOR TASK 1 IN ASSIGNMENT 2)
         pass
 
@@ -959,9 +982,6 @@ class Sink(Operator):
     def apply(self, tuples: List[ATuple]):
         if len(tuples) > 1:
             self.output = tuples
-            if self.track_prov:
-                for t in self.output[1]:
-                    t.operator = self
             self.saveAsCsv()
         pass
 
@@ -1069,15 +1089,11 @@ class Select(Operator):
         ans = [tuples[0], [], tuples[2]]
         if self.predicate is None:
             ans[1] = data
-            if self.track_prov:
-                for x in ans[1]:
-                    x.operator=self
             return self.pushNxt.apply(ans)
 
         for d in data:
             for k in dict(self.predicate).keys():
                 if d.tuple[map[k]] == str(self.predicate[k]):
-                    d.operator=self
                     ans[1].append(d)
         self.pushNxt.apply(ans)
         pass
