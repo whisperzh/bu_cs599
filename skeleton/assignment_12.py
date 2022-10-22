@@ -752,10 +752,25 @@ class Histogram(Operator):
         # YOUR CODE HERE
         if inputs is not None:
             self.next_opt = inputs[0]
+        else:
+            self.next_opt = None
         if outputs is not None:
             self.pushNxt = outputs[0]
         self.ans = []
         self.data = []
+        self.track_prov = track_prov
+        if self.track_prov:
+            self.lineage_map = {}
+        pass
+
+    def lineage(self, tuples: List[ATuple]) -> List[List[ATuple]]:
+        original_tuples = self.lineage_map[tuples.tuple[0]]
+        lin = []
+        for t in original_tuples:
+            lin.append(self.next_opt.lineage(t))
+        if len(lin) is 1:
+            return lin[0]
+        return lin
         pass
 
     # Returns histogram (or None if done)
@@ -763,14 +778,22 @@ class Histogram(Operator):
         # YOUR CODE HERE
         data = self.next_opt.get_next()
         dic = {}
+
         for d in data[1]:
             key = d.tuple[0]
             val = dic.get(key, 0)
+            if self.track_prov:
+                if val == 0:
+                    self.lineage_map[key] = [d]
+                else:
+                    self.lineage_map[key].append(d)
             val += 1
             dic[key] = val
         tp1 = []
         for k in dic.keys():
-            tp1.append(ATuple([k, dic[k]]))
+            Arow = ATuple([k, dic[k]])
+            Arow.operator = self
+            tp1.append(Arow)
         data[1] = tp1
         data[0] = ATuple(["Rating", "count"])
         return data
@@ -787,9 +810,19 @@ class Histogram(Operator):
                 val = dic.get(key, 0)
                 val += 1
                 dic[key] = val
+                if self.track_prov:
+                    if self.next_opt is None:
+                        self.next_opt = d.operator
+                    if val == 1:
+                        self.lineage_map[key] = [d]
+                    else:
+                        self.lineage_map[key].append(d)
             tp1 = []
             for k in dic.keys():
-                tp1.append(ATuple([k, dic[k]]))
+                Arow=ATuple([k, dic[k]])
+                if self.track_prov:
+                    Arow.operator=self
+                tp1.append(Arow)
             ans = [ATuple(["Ratings", "amount"]), tp1]
             self.pushNxt.apply(ans)
         else:
@@ -854,12 +887,12 @@ class OrderBy(Operator):
         title = data[0].tuple
         data = data[1]
         titleMap = {}
-        createTitleMap(title,titleMap)
+        createTitleMap(title, titleMap)
 
         comp = titleMap[self.comp]
         if self.track_prov:
             for d in data:
-                d.operator=self
+                d.operator = self
 
         data.sort(key=lambda x: x.tuple[comp], reverse=not self.Asc)
         return [ATuple(title), data]
@@ -894,13 +927,13 @@ class OrderBy(Operator):
             for d in data_raw:
                 if self.track_prov:
                     if self.next_opt is None:
-                        self.next_opt=d.operator
+                        self.next_opt = d.operator
                     d.operator = self
                 self.data.append(d)
 
             comp = self.titleMap[self.comp]
-            self.data.sort(key=lambda x: x.tuple[comp], reverse=not self.Asc)
-            self.pushNxt.apply([ATuple(self.title), self.data])
+            # self.data.sort(key=lambda x: x.tuple[comp], reverse=not self.Asc)
+            # self.pushNxt.apply([ATuple(self.title), self.data])
         pass
 
 
@@ -940,9 +973,12 @@ class TopK(Operator):
                                    partition_strategy=partition_strategy)
         if inputs is not None:
             self.next_opts = inputs[0]
+        else:
+            self.next_opts = None
         if outputs is not None:
             self.pushNxt = outputs[0]
         self.k = k
+        self.track_prov = track_prov
         # YOUR CODE HERE
         pass
 
@@ -952,6 +988,9 @@ class TopK(Operator):
         title = data[0].tuple
         data = data[1]
         data = data[0:self.k]
+        if self.track_prov:
+            for d in data:
+                d.operator = self
         return [ATuple(title), data]
         # YOUR CODE HERE
         pass
@@ -959,6 +998,7 @@ class TopK(Operator):
     # Returns the lineage of the given tuples
     def lineage(self, tuples):
         # YOUR CODE HERE (ONLY FOR TASK 1 IN ASSIGNMENT 2)
+        return self.next_opts.lineage(tuples)
         pass
 
     # Returns the where-provenance of the attribute
@@ -969,10 +1009,16 @@ class TopK(Operator):
 
     # Applies the operator logic to the given list of tuples
     def apply(self, tuples: List[ATuple]):
-        if (len(tuples) == 1):
+        if len(tuples) == 1:
             self.pushNxt.apply(tuples)
         else:
-            self.pushNxt.apply([tuples[0], tuples[1][0:self.k]])
+            data = tuples[1][0:self.k]
+            if self.track_prov:
+                for d in data:
+                    if self.next_opts is None:
+                        self.next_opts = d.operator
+                    d.operator = self
+            self.pushNxt.apply([tuples[0], data])
         pass
 
 

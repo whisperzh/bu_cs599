@@ -89,15 +89,15 @@ def test_push_groupby():
 
 
 def test_push_orderby():
-    sink = Sink(inputs=None, track_prov=True,outputs=None, filepath=resPath)
-    orderby = OrderBy(inputs=None, outputs=[sink],track_prov=True, comparator="Rating", ASC=False)
-    proj = Project(inputs=None, outputs=[orderby], track_prov=True,fields_to_keep=["Rating"])
-    join = Join(left_inputs=None, right_inputs=None, outputs=[proj],track_prov=True, left_join_attribute="UID2",
+    sink = Sink(inputs=None, track_prov=True, outputs=None, filepath=resPath)
+    orderby = OrderBy(inputs=None, outputs=[sink], track_prov=True, comparator="Rating", ASC=False)
+    proj = Project(inputs=None, outputs=[orderby], track_prov=True, fields_to_keep=["Rating"])
+    join = Join(left_inputs=None, right_inputs=None, outputs=[proj], track_prov=True, left_join_attribute="UID2",
                 right_join_attribute="UID")
-    se1 = Select(inputs=None, predicate={"UID1": 1},track_prov=True, outputs=[join])
-    sf = Scan(filepath=pathf,track_prov=True, outputs=[se1])
-    se2 = Select(inputs=None, predicate={"MID": 1},track_prov=True, outputs=[join])
-    sr = Scan(filepath=pathr, isleft=False, track_prov=True,outputs=[se2])
+    se1 = Select(inputs=None, predicate={"UID1": 1}, track_prov=True, outputs=[join])
+    sf = Scan(filepath=pathf, track_prov=True, outputs=[se1])
+    se2 = Select(inputs=None, predicate={"MID": 1}, track_prov=True, outputs=[join])
+    sr = Scan(filepath=pathr, isleft=False, track_prov=True, outputs=[se2])
     sf.start()
     sr.start()
     answer = [('1', '1'), ('1', '1', '1'), ]
@@ -109,44 +109,43 @@ def test_push_orderby():
 
 #
 def test_push_topk():
-    sink = Sink(inputs=None, outputs=None, filepath=resPath)
-    topk = TopK(inputs=None, outputs=[sink], k=1)
-    orderby = OrderBy(inputs=None, outputs=[topk], comparator="Rating", ASC=False)
-    proj = Project(inputs=None, outputs=[orderby], fields_to_keep=["Rating"])
-    join = Join(left_inputs=None, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
+    sink = Sink(inputs=None, track_prov=True, outputs=None, filepath=resPath)
+    topk = TopK(inputs=None, track_prov=True, outputs=[sink], k=1)
+    orderby = OrderBy(inputs=None, track_prov=True, outputs=[topk], comparator="Rating", ASC=False)
+    proj = Project(inputs=None, track_prov=True, outputs=[orderby], fields_to_keep=["Rating"])
+    join = Join(left_inputs=None, track_prov=True, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
                 right_join_attribute="UID")
-    se1 = Select(inputs=None, predicate={"UID1": 1}, outputs=[join])
-    sf = Scan(filepath=pathf, outputs=[se1])
-    se2 = Select(inputs=None, predicate={"MID": 1}, outputs=[join])
-    sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
+    se1 = Select(inputs=None, track_prov=True, predicate={"UID1": 1}, outputs=[join])
+    sf = Scan(filepath=pathf, track_prov=True, outputs=[se1])
+    se2 = Select(inputs=None, track_prov=True, predicate={"MID": 1}, outputs=[join])
+    sr = Scan(filepath=pathr, track_prov=True, isleft=False, outputs=[se2])
     sf.start()
     sr.start()
-    answer = [['1', ], ]
-    t = sink.output[1]
-    for i in range(len(answer)):
-        assert t[i].tuple == answer[i]
+    answer = [('1', '1'), ('1', '1', '1'), ]
+    temp = sink.output[1]
+    lineage = temp[0].lineage()
+    assert lineage == answer
     pass
 
 
-#
 def test_push_hist():
-    sink = Sink(inputs=None, outputs=None, filepath=resPath)
-    hist = Histogram(inputs=None, outputs=[sink])
-    topk = TopK(inputs=None, outputs=[hist], k=1)
-    proj = Project(inputs=None, outputs=[topk], fields_to_keep=["Rating"])
-    join = Join(left_inputs=None, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
+    sink = Sink(inputs=None, track_prov=True, outputs=None, filepath=resPath)
+    hist = Histogram(inputs=None, track_prov=True, outputs=[sink])
+    topk = TopK(inputs=None, outputs=[hist], track_prov=True, k=1)
+    proj = Project(inputs=None, outputs=[topk], track_prov=True, fields_to_keep=["Rating"])
+    join = Join(left_inputs=None, right_inputs=None, outputs=[proj], track_prov=True, left_join_attribute="UID2",
                 right_join_attribute="UID")
-    se1 = Select(inputs=None, predicate={"UID1": 1}, outputs=[join])
-    sf = Scan(filepath=pathf, outputs=[se1])
-    se2 = Select(inputs=None, predicate={"MID": 1}, outputs=[join])
-    sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
+    se1 = Select(inputs=None, track_prov=True, predicate={"UID1": 1}, outputs=[join])
+    sf = Scan(filepath=pathf, track_prov=True, outputs=[se1])
+    se2 = Select(inputs=None, predicate={"MID": 1}, track_prov=True, outputs=[join])
+    sr = Scan(filepath=pathr, isleft=False, track_prov=True, outputs=[se2])
     sf.start()
     sr.start()
-    answer = ['1', 1]
-    t = sink.output[1][0].tuple
-    assert t == answer
+    answer = [('1', '1'), ('1', '1', '1'), ]
+    temp = sink.output[1]
+    lineage = temp[0].lineage()
+    assert lineage == answer
     pass
-
 
 # ——————————
 
@@ -250,39 +249,40 @@ def test_pull_orderby():
     pass
 
 
-
 def test_pull_topk():
-    sf = Scan(filepath=pathf, outputs=None)
-    se = Select(inputs=[sf], predicate={"UID1": 1}, outputs=None)
-    sr = Scan(filepath=pathr, outputs=None)
-    se1 = Select(inputs=[sr], predicate={"MID": 1}, outputs=None)
-    join = Join(left_inputs=[se], right_inputs=[se1], outputs=None, left_join_attribute="UID2",
+    sf = Scan(filepath=pathf, track_prov=True, outputs=None)
+    se = Select(inputs=[sf], predicate={"UID1": 1}, track_prov=True, outputs=None)
+    sr = Scan(filepath=pathr, track_prov=True, outputs=None)
+    se1 = Select(inputs=[sr], predicate={"MID": 1}, track_prov=True, outputs=None)
+    join = Join(left_inputs=[se], right_inputs=[se1], outputs=None, track_prov=True, left_join_attribute="UID2",
                 right_join_attribute="UID")
-    proj = Project(inputs=[join], outputs=None, fields_to_keep=["Rating"])
-    groupby = GroupBy(inputs=[proj], outputs=None, key="", value="Rating", agg_gun="AVG")
-    orderby = OrderBy(inputs=[groupby], outputs=None, comparator="Rating", ASC=False)
-    topk = TopK(inputs=[orderby], outputs=None, k=1)
-    answer = ['1.0', ]
+    proj = Project(inputs=[join], outputs=None, track_prov=True, fields_to_keep=["Rating"])
+    groupby = GroupBy(inputs=[proj], outputs=None, key="", track_prov=True, value="Rating", agg_gun="AVG")
+    orderby = OrderBy(inputs=[groupby], outputs=None, comparator="Rating", track_prov=True, ASC=False)
+    topk = TopK(inputs=[orderby], outputs=None, track_prov=True, k=1)
+
+    answer = [('1', '1'), ('1', '1', '1')]
     t = topk.get_next()[1]
-    for i in range(len(answer)):
-        assert str(t[i].tuple[0]) == answer[i]
+    lineage = t[0].lineage()
+    assert lineage == answer
     pass
 
 
 def test_pull_hist():
-    sf = Scan(filepath=pathf, outputs=None)
-    se = Select(inputs=[sf], predicate={"UID1": 1}, outputs=None)
-    sr = Scan(filepath=pathr, outputs=None)
-    se1 = Select(inputs=[sr], predicate={"MID": 1}, outputs=None)
+    sf = Scan(filepath=pathf, outputs=None, track_prov=True)
+    se = Select(inputs=[sf], predicate={"UID1": 1}, track_prov=True, outputs=None)
+    sr = Scan(filepath=pathr, outputs=None, track_prov=True)
+    se1 = Select(inputs=[sr], predicate={"MID": 1}, outputs=None, track_prov=True)
     join = Join(left_inputs=[se], right_inputs=[se1], outputs=None, left_join_attribute="UID2",
-                right_join_attribute="UID")
-    proj = Project(inputs=[join], outputs=None, fields_to_keep=["Rating"])
-    groupby = GroupBy(inputs=[proj], outputs=None, key="", value="Rating", agg_gun="AVG")
-    orderby = OrderBy(inputs=[groupby], outputs=None, comparator="Rating", ASC=False)
-    hist = Histogram(inputs=[orderby], outputs=None)
-    answer = [1.0, 1]
-    t = hist.get_next()[1][0].tuple
-    assert t == answer
+                right_join_attribute="UID", track_prov=True)
+    proj = Project(inputs=[join], outputs=None, fields_to_keep=["Rating"], track_prov=True)
+    groupby = GroupBy(inputs=[proj], outputs=None, key="", value="Rating", agg_gun="AVG", track_prov=True)
+    orderby = OrderBy(inputs=[groupby], outputs=None, comparator="Rating", ASC=False, track_prov=True)
+    hist = Histogram(inputs=[orderby], outputs=None, track_prov=True)
+    answer = [('1', '1'), ('1', '1', '1')]
+    t = hist.get_next()[1]
+    lineage = t[0].lineage()
+    assert lineage == answer
     pass
 
 
