@@ -59,6 +59,11 @@ class ATuple:
 
     # Returns the How-provenance of self
     def how(self) -> str:
+        how_provenance = '('
+        for item in self.metadata['how']:
+            how_provenance += '(' + item + '),'
+        return how_provenance[:-1] + ')'
+
         # YOUR CODE HERE (ONLY FOR TASK 3 IN ASSIGNMENT 2)
         pass
 
@@ -170,6 +175,7 @@ class Scan(Operator):
         self.track_prov = track_prov
         if track_prov:
             self.l_map = {}
+        self.row_idx = 1
 
         pass
 
@@ -232,16 +238,37 @@ class Scan(Operator):
                     yield bat
                     count = 1
                     Arow = ATuple(tuple(row))
+
+                    # lineage
                     if self.track_prov:
                         self.l_map[Arow.__hash__()] = Arow.tuple
                         Arow.operator = self
+
+                    # how provenance
+                    if self.propagate_prov:
+                        if self.isLeft:
+                            Arow.metadata = {'how': 'f' + str(self.row_idx)}
+                        else:
+                            Arow.metadata = {'how': 'r' + str(self.row_idx)}
+                        self.row_idx += 1
                     bat = [Arow]
                 else:
                     count += 1
                     Arow = ATuple(tuple(row))
+
+                    # lineage
                     if self.track_prov:
                         self.l_map[Arow.__hash__()] = Arow.tuple
                         Arow.operator = self
+
+                    # how provenance
+                    if self.propagate_prov:
+                        if self.isLeft:
+                            Arow.metadata = {'how': 'f' + str(self.row_idx)}
+                        else:
+                            Arow.metadata = {'how': 'r' + str(self.row_idx)}
+                        self.row_idx += 1
+
                     bat.append(Arow)
 
             yield bat
@@ -330,7 +357,7 @@ class Join(Operator):
             datal = datal[1]
             for d in datal:
                 key = d.tuple[self.leftTitlemap[self.left_attri]]
-                self.keyMapL[key] = d.tuple
+                self.keyMapL[key] = d
             datal = self.next1.get_next()
         # get key and map left
 
@@ -346,7 +373,12 @@ class Join(Operator):
             for d in datar:
                 lef = self.keyMapL.get(d.tuple[self.rightTitlemap[self.right_attri]], None)
                 if lef is not None:
-                    Arow = ATuple(lef + d.tuple)
+                    Arow = ATuple(lef.tuple + d.tuple)
+                    # how provenance
+                    if self.propagate_prov:
+                        Arow.metadata = {}
+                        Arow.metadata['how'] = lef.metadata['how'] + '*' + d.metadata['how']
+
                     if self.track_prov:
                         Arow.operator = self
                     ans[1].append(Arow)
@@ -363,14 +395,14 @@ class Join(Operator):
         for t in tuples:
             l_t = ATuple(t.tuple[0:len(self.titleL)])
             r_t = ATuple(t.tuple[len(self.titleL):])
-            l_lineage=self.next1.lineage([l_t])
-            r_lineage=self.next2.lineage([r_t])
-            if isinstance(l_lineage,list):
+            l_lineage = self.next1.lineage([l_t])
+            r_lineage = self.next2.lineage([r_t])
+            if isinstance(l_lineage, list):
                 for l in l_lineage:
                     ans.append(l)
             else:
                 ans.append(l_lineage)
-            if isinstance(r_lineage,list):
+            if isinstance(r_lineage, list):
                 for r in r_lineage:
                     ans.append(r)
             else:
@@ -422,6 +454,11 @@ class Join(Operator):
                         Arow = ATuple(item)
                         if self.track_prov:
                             Arow.operator = self
+
+                        # how provenance
+                        if self.propagate_prov:
+                            Arow.metadata['how'] = left_tuples.metadata['how'] + '*' + rig.metadata['how']
+
                         data[1].append(Arow)
                     if self.next1 is None:
                         self.next1 = left_tuples.operator
@@ -442,6 +479,11 @@ class Join(Operator):
                     Arow = ATuple(item)
                     if self.track_prov:
                         Arow.operator = self
+
+                    # how provenance
+                    if self.propagate_prov:
+                        Arow.metadata['how'] = lef.metadata['how'] + '*' + right_tuples.metadata['how']
+
                     data[1].append(Arow)
                 if self.next1 is None:
                     self.next1 = lef.operator
@@ -526,6 +568,12 @@ class Project(Operator):
             if self.track_prov:
                 self.lineage_map[Arow.__hash__()] = d
                 Arow.operator = self
+
+            # how provenance
+            if self.propagate_prov:
+                Arow.metadata = {}
+                Arow.metadata['how'] = d.metadata['how']
+
             ans[1].append(Arow)
         return ans
         # YOUR CODE HERE
@@ -580,6 +628,11 @@ class Project(Operator):
                     Arow.operator = self
                     if self.next_opt is None:
                         self.next_opt = d.operator
+
+                # how provenance
+                if self.propagate_prov:
+                    Arow.metadata['how'] = d.metadata['how']
+
                 ans[1].append(Arow)
             self.pushNxt.apply(ans)
         pass
@@ -646,10 +699,19 @@ class GroupBy(Operator):
             ans = []
             if self.track_prov:
                 self.lineage_original_tuples = {}
+            if self.propagate_prov:
+                self.how_map = {}
             for d in data:
                 if dic.get(d.tuple[key]):
                     dic[d.tuple[key]] += int(d.tuple[value])
                     diclen[d.tuple[key]] += 1
+
+                    # how provenance
+                    if self.propagate_prov:
+                        how_p = d.metadata['how']+ '@' + d.tuple[value]
+                        self.how_map[d.tuple[key]].append(how_p)
+
+                    # lineage
                     if self.track_prov:
                         self.lineage_original_tuples[d.tuple[key]].append(d)
                 else:
@@ -657,26 +719,43 @@ class GroupBy(Operator):
                     diclen[d.tuple[key]] = 1
                     if self.track_prov:
                         self.lineage_original_tuples[d.tuple[key]] = [d]
+
+                    # how provenance
+                    if self.propagate_prov:
+                        how_p = d.metadata['how'] + '@' + d.tuple[value]
+                        self.how_map[d.tuple[key]] = [how_p, ]
+
             for k in dic.keys():
                 dic[k] /= diclen[k]
                 Arow = ATuple([str(k), dic[k]])
                 if self.track_prov:
                     Arow.operator = self
+
+                # how provenance
+                if self.propagate_prov:
+                    Arow.metadata = {}
+                    Arow.metadata['how'] = self.how_map[k]
+
                 ans.append(Arow)
             return ans
 
         else:
-
             if len(data) is not 0:
                 sum = 0
+                if self.propagate_prov:
+                    how = []
                 for d in data:
                     sum += int(d.tuple[0])
+                    how.append(d.metadata['how'] + '@' + d.tuple[0])
                 ans = sum / len(data)
                 Arow = ATuple([str(ans)])
                 if self.track_prov:
-                    self.lineage_original_tuples[str(ans)]=data
-                if self.track_prov:
+                    self.lineage_original_tuples[str(ans)] = data
                     Arow.operator = self
+
+                if self.propagate_prov:
+                    Arow.metadata = {}
+                    Arow.metadata['how'] = how
 
                 return [Arow]
             else:
@@ -798,11 +877,11 @@ class Histogram(Operator):
         pass
 
     def lineage(self, tuples: List[ATuple]) -> List[List[ATuple]]:
-        ans=[]
+        ans = []
         for t in tuples:
             original_tuples = self.lineage_map[t.tuple[0]]
-            lin=self.next_opt.lineage(original_tuples)
-            if isinstance(lin,list):
+            lin = self.next_opt.lineage(original_tuples)
+            if isinstance(lin, list):
                 for item in lin:
                     ans.append(item)
 
@@ -1240,10 +1319,10 @@ class Select(Operator):
         pass
 
     def lineage(self, tuples: List[ATuple]) -> List[List[ATuple]]:
-        ans=[]
+        ans = []
         for t in tuples:
-            lin=self.next_opt.lineage([t])
-            if isinstance(lin,list):
+            lin = self.next_opt.lineage([t])
+            if isinstance(lin, list):
                 for l in lin:
                     ans.append(l)
         return ans

@@ -178,21 +178,23 @@ def test_pull_select():
 
 #
 def test_1():
-    sf = Scan(filepath="../data/lin_f.txt", track_prov=True, outputs=None)
-    se = Select(inputs=[sf], predicate={"UID1": 0}, track_prov=True, outputs=None)
-    sr = Scan(filepath="../data/lin_m.txt", track_prov=True, outputs=None)
-    se1 = Select(inputs=[sr], predicate=None ,track_prov=True, outputs=None)
-    join = Join(left_inputs=[se], right_inputs=[se1], outputs=None, track_prov=True, left_join_attribute="UID2",
+    sf = Scan(filepath="../data/lin_f.txt",propagate_prov=True, track_prov=True, outputs=None)
+    se = Select(inputs=[sf], predicate={"UID1": 0}, propagate_prov=True,track_prov=True, outputs=None)
+    sr = Scan(filepath="../data/lin_m.txt", track_prov=True,propagate_prov=True, outputs=None)
+    se1 = Select(inputs=[sr], predicate=None ,track_prov=True,propagate_prov=True, outputs=None)
+    join = Join(left_inputs=[se], right_inputs=[se1], outputs=None, propagate_prov=True,track_prov=True, left_join_attribute="UID2",
                 right_join_attribute="UID")
-    proj = Project(inputs=[join], outputs=None, track_prov=True, fields_to_keep=["MID","Rating"])
-    groupby = GroupBy(inputs=[proj], outputs=None, key="MID", value="Rating", track_prov=True, agg_gun="AVG")
-    orderby = OrderBy(inputs=[groupby], outputs=None, comparator="Rating", track_prov=True, ASC=False)
-    fil=Project(inputs=[orderby], outputs=None, track_prov=True, fields_to_keep=["MID"])
+    proj = Project(inputs=[join], outputs=None, track_prov=True,propagate_prov=True, fields_to_keep=["MID","Rating"])
+    groupby = GroupBy(inputs=[proj], outputs=None, key="MID",propagate_prov=True, value="Rating", track_prov=True, agg_gun="AVG")
+    orderby = OrderBy(inputs=[groupby], outputs=None, comparator="Rating", propagate_prov=True,track_prov=True, ASC=False)
+    fil=Project(inputs=[orderby], outputs=None, track_prov=True, propagate_prov=True,fields_to_keep=["MID"])
     answer = [('0', '1'), ('1', '10', '5'),('0', '4'), ('4', '10', '8'), ('0', '18'),  ('18', '10', '2')]
     t = fil.get_next()[1]
+    how=t[0].how()
+    print(how)
     lineage = t[0].lineage()
     assert lineage == answer
-
+test_1()
 
 
 
@@ -243,6 +245,7 @@ def test_pull_groupby():
     lineage = t[0].lineage()
     assert lineage == answer
     pass
+
 
 
 def test_pull_orderby():
