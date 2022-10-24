@@ -221,7 +221,8 @@ class Scan(Operator):
                 tuples = next(self.batch_generator)
                 data = [ATuple(self.keys), tuples, tag]
                 self.pushNxt.apply(data)
-        except:
+        except Exception:
+            logger.debug(Exception)
             self.pushNxt.apply([ATuple(self.keys)])
 
         pass
@@ -457,6 +458,7 @@ class Join(Operator):
 
                         # how provenance
                         if self.propagate_prov:
+                            Arow.metadata={}
                             Arow.metadata['how'] = left_tuples.metadata['how'] + '*' + rig.metadata['how']
 
                         data[1].append(Arow)
@@ -482,6 +484,7 @@ class Join(Operator):
 
                     # how provenance
                     if self.propagate_prov:
+                        Arow.metadata={}
                         Arow.metadata['how'] = lef.metadata['how'] + '*' + right_tuples.metadata['how']
 
                     data[1].append(Arow)
@@ -631,6 +634,7 @@ class Project(Operator):
 
                 # how provenance
                 if self.propagate_prov:
+                    Arow.metadata={}
                     Arow.metadata['how'] = d.metadata['how']
 
                 ans[1].append(Arow)
