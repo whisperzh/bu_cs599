@@ -12,10 +12,10 @@ def test_push_scan():
     sink = Sink(inputs=None, outputs=None, track_prov=True, pull=False, filepath=resPath)
     sr = Scan(filepath=pathf, isleft=False, track_prov=True, outputs=[sink])
     sr.start()
-    answer = [('1', '1'), ('2', '4'), ('3', '2')]
+    answer = [('1', '1')]
     temp = sink.output[1]
     lineage = temp[0].lineage()
-    assert lineage == ('1', '1')
+    assert lineage == answer
     pass
 
 
@@ -27,8 +27,7 @@ def test_push_select():
     answer = [('1', '1'), ]
     temp = sink.output[1]
     lineage = temp[0].lineage()
-    assert lineage == answer[0]
-    pass
+    assert lineage == answer
 
 
 def test_push_join():
@@ -152,10 +151,10 @@ def test_push_hist():
 
 def test_pull_scan():
     sf = Scan(filepath=pathf, track_prov=True, outputs=None)
-    answer = [('1', '1'), ('2', '4'), ('3', '2')]
+    answer = [('1', '1')]
     temp = sf.get_next()[1]
     lineage = temp[0].lineage()
-    assert lineage == answer[0]
+    assert lineage == answer
     pass
 
 
@@ -165,24 +164,38 @@ def test_pull_select():
     temp = se.get_next()[1]
     answer = [('1', '1')]
     lineage = temp[0].lineage()
-    assert lineage == answer[0]
+    assert lineage == answer
     pass
 
+# SELECT R.MID
+# FROM ( SELECT R.MID, AVG(R.Rating) as score
+# FROM Friends as F, Ratings as R
+# WHERE F.UID2 = R.UID
+# AND F.UID1 = 'A'
+# GROUPBY R.MID
+# ORDERBY score DESC
+# LIMIT 1 )
 
-# def LINEAGE():
-#     sink = Sink(inputs=None, outputs=None, track_prov=True,filepath=resPath)
-#     se1 = Select(inputs=None, predicate={"UID1": 1}, track_prov=True,outputs=[sink])
-#     sr = Scan(filepath=pathf, isleft=False,track_prov=True, outputs=[se1])
-#     sr.start()
 #
-#     temp = sink.[1]
-#     answer = [('1', '1')]
-#     temp[0].lineage()
-#     assert temp[0].tuple == answer[0]
-#     pass
-#
-#
-# LINEAGE()
+def test_1():
+    sf = Scan(filepath="../data/lin_f.txt", track_prov=True, outputs=None)
+    se = Select(inputs=[sf], predicate={"UID1": 0}, track_prov=True, outputs=None)
+    sr = Scan(filepath="../data/lin_m.txt", track_prov=True, outputs=None)
+    se1 = Select(inputs=[sr], predicate=None ,track_prov=True, outputs=None)
+    join = Join(left_inputs=[se], right_inputs=[se1], outputs=None, track_prov=True, left_join_attribute="UID2",
+                right_join_attribute="UID")
+    proj = Project(inputs=[join], outputs=None, track_prov=True, fields_to_keep=["MID","Rating"])
+    groupby = GroupBy(inputs=[proj], outputs=None, key="MID", value="Rating", track_prov=True, agg_gun="AVG")
+    orderby = OrderBy(inputs=[groupby], outputs=None, comparator="Rating", track_prov=True, ASC=False)
+    fil=Project(inputs=[orderby], outputs=None, track_prov=True, fields_to_keep=["MID"])
+    answer = [('0', '1'), ('1', '10', '5'),('0', '4'), ('4', '10', '8'), ('0', '18'),  ('18', '10', '2')]
+    t = fil.get_next()[1]
+    lineage = t[0].lineage()
+    assert lineage == answer
+
+
+
+
 
 
 def test_pull_join():

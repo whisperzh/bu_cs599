@@ -49,7 +49,7 @@ class ATuple:
     # Returns the lineage of self
     def lineage(self) -> List[ATuple]:
         # YOUR CODE HERE (ONLY FOR TASK 1 IN ASSIGNMENT 2)
-        return self.operator.lineage(self)
+        return self.operator.lineage([self])
         pass
 
     # Returns the Where-provenance of the attribute at index 'att_index' of self
@@ -190,8 +190,11 @@ class Scan(Operator):
 
     # Returns the lineage of the given tuples
     def lineage(self, tuples):
-        ans = self.l_map.get(tuples.__hash__(), None)
-        return ans[:]
+        ans = []
+        for t in tuples:
+            item = self.l_map.get(t.__hash__(), None)
+            ans.append(item)
+        return ans
         # YOUR CODE HERE (ONLY FOR TASK 1 IN ASSIGNMENT 2)
         pass
 
@@ -356,9 +359,23 @@ class Join(Operator):
 
     # Returns the lineage of the given tuples
     def lineage(self, tuples):
-        l_t = ATuple(tuples.tuple[0:len(self.titleL)])
-        r_t = ATuple(tuples.tuple[len(self.titleL):])
-        return [self.next1.lineage(l_t), self.next2.lineage(r_t)]
+        ans = []
+        for t in tuples:
+            l_t = ATuple(t.tuple[0:len(self.titleL)])
+            r_t = ATuple(t.tuple[len(self.titleL):])
+            l_lineage=self.next1.lineage([l_t])
+            r_lineage=self.next2.lineage([r_t])
+            if isinstance(l_lineage,list):
+                for l in l_lineage:
+                    ans.append(l)
+            else:
+                ans.append(l_lineage)
+            if isinstance(r_lineage,list):
+                for r in r_lineage:
+                    ans.append(r)
+            else:
+                ans.append(r_lineage)
+        return ans
 
         # YOUR CODE HERE (ONLY FOR TASK 1 IN ASSIGNMENT 2)
         pass
@@ -518,8 +535,16 @@ class Project(Operator):
     def lineage(self, tuples):
         # YOUR CODE HERE (ONLY FOR TASK 1 IN ASSIGNMENT 2)
         # needtodo tuples-> original tuple
-        original_tuple = self.lineage_map.get(tuples.__hash__(), None)
-        return self.next_opt.lineage(original_tuple)
+        ans = []
+        for t in tuples:
+            original_tuple = self.lineage_map.get(t.__hash__(), None)
+            tmp = self.next_opt.lineage([original_tuple])
+            if isinstance(tmp, list):
+                for item in tmp:
+                    ans.append(item)
+            else:
+                ans.append(tmp)
+        return ans
         pass
 
     # Returns the where-provenance of the attribute
@@ -609,7 +634,7 @@ class GroupBy(Operator):
         self.agg = agg_gun
         self.data = []
         self.track_prov = track_prov
-        self.lineage_original_tuples = None
+        self.lineage_original_tuples = {}
         # YOUR CODE HERE
         pass
 
@@ -634,23 +659,25 @@ class GroupBy(Operator):
                         self.lineage_original_tuples[d.tuple[key]] = [d]
             for k in dic.keys():
                 dic[k] /= diclen[k]
-                Arow = ATuple([k, dic[k]])
+                Arow = ATuple([str(k), dic[k]])
                 if self.track_prov:
                     Arow.operator = self
                 ans.append(Arow)
             return ans
 
         else:
-            if self.track_prov:
-                self.lineage_original_tuples = data
+
             if len(data) is not 0:
                 sum = 0
                 for d in data:
                     sum += int(d.tuple[0])
                 ans = sum / len(data)
-                Arow = ATuple([ans])
+                Arow = ATuple([str(ans)])
+                if self.track_prov:
+                    self.lineage_original_tuples[str(ans)]=data
                 if self.track_prov:
                     Arow.operator = self
+
                 return [Arow]
             else:
                 return []
@@ -660,13 +687,13 @@ class GroupBy(Operator):
     # Returns aggregated value per distinct key in the input (or None if done)
     def get_next(self):
         data = self.next_opt.get_next()
-        title = data[0].tuple
+        self.title = data[0].tuple
         data = data[1]
-        ans = [ATuple(title)]
-        titleMap = {}
-        createTitleMap(title, titleMap)
+        ans = [ATuple(self.title)]
+        self.titleMap = {}
+        createTitleMap(self.title, self.titleMap)
         if self.agg == "AVG":
-            ans.append(self.AVG(data, titleMap.get(self.key, None), titleMap[self.value]))
+            ans.append(self.AVG(data, self.titleMap.get(self.key, None), self.titleMap[self.value]))
         if self.key is None:
             ans[0] = ATuple(["Average"])
         return ans
@@ -676,11 +703,18 @@ class GroupBy(Operator):
     # Returns the lineage of the given tuples
     def lineage(self, tuples):
         ans = []
-        for t in self.lineage_original_tuples:
-            ans.append(self.next_opt.lineage(t))
-        if len(ans) == 1:
-            return ans[0]
-        return ans[:]
+        for t in tuples:
+            key = 0
+            if self.key:
+                key = self.titleMap[self.key]
+            for i in self.lineage_original_tuples[t.tuple[key]]:
+                tmp = self.next_opt.lineage([i])
+                if isinstance(tmp, list):
+                    for item in tmp:
+                        ans.append(item)
+                else:
+                    ans.append(tmp)
+        return ans
         # YOUR CODE HERE (ONLY FOR TASK 1 IN ASSIGNMENT 2)
         pass
 
@@ -764,13 +798,15 @@ class Histogram(Operator):
         pass
 
     def lineage(self, tuples: List[ATuple]) -> List[List[ATuple]]:
-        original_tuples = self.lineage_map[tuples.tuple[0]]
-        lin = []
-        for t in original_tuples:
-            lin.append(self.next_opt.lineage(t))
-        if len(lin) is 1:
-            return lin[0]
-        return lin
+        ans=[]
+        for t in tuples:
+            original_tuples = self.lineage_map[t.tuple[0]]
+            lin=self.next_opt.lineage(original_tuples)
+            if isinstance(lin,list):
+                for item in lin:
+                    ans.append(item)
+
+        return ans
         pass
 
     # Returns histogram (or None if done)
@@ -819,9 +855,9 @@ class Histogram(Operator):
                         self.lineage_map[key].append(d)
             tp1 = []
             for k in dic.keys():
-                Arow=ATuple([k, dic[k]])
+                Arow = ATuple([k, dic[k]])
                 if self.track_prov:
-                    Arow.operator=self
+                    Arow.operator = self
                 tp1.append(Arow)
             ans = [ATuple(["Ratings", "amount"]), tp1]
             self.pushNxt.apply(ans)
@@ -901,7 +937,15 @@ class OrderBy(Operator):
 
     # Returns the lineage of the given tuples
     def lineage(self, tuples):
-        return self.next_opt.lineage(tuples)
+        ans = []
+        for t in tuples:
+            tmp = self.next_opt.lineage([t])
+            if isinstance(tmp, list):
+                for item in tmp:
+                    ans.append(item)
+            else:
+                ans.append(tmp)
+        return ans
         # YOUR CODE HERE (ONLY FOR TASK 1 IN ASSIGNMENT 2)
         pass
 
@@ -1196,7 +1240,13 @@ class Select(Operator):
         pass
 
     def lineage(self, tuples: List[ATuple]) -> List[List[ATuple]]:
-        return self.next_opt.lineage(tuples)
+        ans=[]
+        for t in tuples:
+            lin=self.next_opt.lineage([t])
+            if isinstance(lin,list):
+                for l in lin:
+                    ans.append(l)
+        return ans
         pass
 
     # Applies the operator logic to the given list of tuples
