@@ -59,10 +59,7 @@ class ATuple:
 
     # Returns the How-provenance of self
     def how(self) -> str:
-        how_provenance = '('
-        for item in self.metadata['how']:
-            how_provenance += '(' + item + '),'
-        return how_provenance[:-1] + ')'
+        return self.metadata['how']
 
         # YOUR CODE HERE (ONLY FOR TASK 3 IN ASSIGNMENT 2)
         pass
@@ -222,7 +219,6 @@ class Scan(Operator):
                 data = [ATuple(self.keys), tuples, tag]
                 self.pushNxt.apply(data)
         except Exception:
-            logger.debug(Exception)
             self.pushNxt.apply([ATuple(self.keys)])
 
         pass
@@ -704,7 +700,7 @@ class GroupBy(Operator):
             if self.track_prov:
                 self.lineage_original_tuples = {}
             if self.propagate_prov:
-                self.how_str = {}
+                self.how_map = {}
             for d in data:
                 if dic.get(d.tuple[key]):
                     dic[d.tuple[key]] += int(d.tuple[value])
@@ -712,8 +708,8 @@ class GroupBy(Operator):
 
                     # how provenance
                     if self.propagate_prov:
-                        how_p = d.metadata['how'] + '@' + d.tuple[value]
-                        self.how_str[d.tuple[key]].append(how_p)
+                        how_p = '('+d.metadata['how'] + '@' + d.tuple[value]+'),'
+                        self.how_map[d.tuple[key]] += how_p
 
                     # lineage
                     if self.track_prov:
@@ -726,8 +722,8 @@ class GroupBy(Operator):
 
                     # how provenance
                     if self.propagate_prov:
-                        how_p = d.metadata['how'] + '@' + d.tuple[value]
-                        self.how_str[d.tuple[key]] = [how_p, ]
+                        how_p = '('+d.metadata['how'] + '@' + d.tuple[value]+'),'
+                        self.how_map[d.tuple[key]] = 'AVG ('+ how_p
 
             for k in dic.keys():
                 dic[k] /= diclen[k]
@@ -738,7 +734,7 @@ class GroupBy(Operator):
                 # how provenance
                 if self.propagate_prov:
                     Arow.metadata = {}
-                    Arow.metadata['how'] = self.how_str[k]
+                    Arow.metadata['how'] = self.how_map[k][:-1]+')'
 
                 ans.append(Arow)
             return ans
@@ -747,10 +743,10 @@ class GroupBy(Operator):
             if len(data) is not 0:
                 sum = 0
                 if self.propagate_prov:
-                    how = []
+                    how ='AVG ('
                 for d in data:
                     sum += int(d.tuple[0])
-                    how.append(d.metadata['how'] + '@' + d.tuple[0])
+                    how += '('+d.metadata['how'] + '@' + d.tuple[0]+'),'
                 ans = sum / len(data)
                 Arow = ATuple([str(ans)])
                 if self.track_prov:
@@ -759,7 +755,7 @@ class GroupBy(Operator):
 
                 if self.propagate_prov:
                     Arow.metadata = {}
-                    Arow.metadata['how'] = how
+                    Arow.metadata['how'] = how[:-1]+')'
 
                 return [Arow]
             else:
