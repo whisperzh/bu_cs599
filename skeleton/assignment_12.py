@@ -458,7 +458,7 @@ class Join(Operator):
 
                         # how provenance
                         if self.propagate_prov:
-                            Arow.metadata={}
+                            Arow.metadata = {}
                             Arow.metadata['how'] = left_tuples.metadata['how'] + '*' + rig.metadata['how']
 
                         data[1].append(Arow)
@@ -484,7 +484,7 @@ class Join(Operator):
 
                     # how provenance
                     if self.propagate_prov:
-                        Arow.metadata={}
+                        Arow.metadata = {}
                         Arow.metadata['how'] = lef.metadata['how'] + '*' + right_tuples.metadata['how']
 
                     data[1].append(Arow)
@@ -634,7 +634,7 @@ class Project(Operator):
 
                 # how provenance
                 if self.propagate_prov:
-                    Arow.metadata={}
+                    Arow.metadata = {}
                     Arow.metadata['how'] = d.metadata['how']
 
                 ans[1].append(Arow)
@@ -704,7 +704,7 @@ class GroupBy(Operator):
             if self.track_prov:
                 self.lineage_original_tuples = {}
             if self.propagate_prov:
-                self.how_map = {}
+                self.how_str = {}
             for d in data:
                 if dic.get(d.tuple[key]):
                     dic[d.tuple[key]] += int(d.tuple[value])
@@ -712,8 +712,8 @@ class GroupBy(Operator):
 
                     # how provenance
                     if self.propagate_prov:
-                        how_p = d.metadata['how']+ '@' + d.tuple[value]
-                        self.how_map[d.tuple[key]].append(how_p)
+                        how_p = d.metadata['how'] + '@' + d.tuple[value]
+                        self.how_str[d.tuple[key]].append(how_p)
 
                     # lineage
                     if self.track_prov:
@@ -727,7 +727,7 @@ class GroupBy(Operator):
                     # how provenance
                     if self.propagate_prov:
                         how_p = d.metadata['how'] + '@' + d.tuple[value]
-                        self.how_map[d.tuple[key]] = [how_p, ]
+                        self.how_str[d.tuple[key]] = [how_p, ]
 
             for k in dic.keys():
                 dic[k] /= diclen[k]
@@ -738,7 +738,7 @@ class GroupBy(Operator):
                 # how provenance
                 if self.propagate_prov:
                     Arow.metadata = {}
-                    Arow.metadata['how'] = self.how_map[k]
+                    Arow.metadata['how'] = self.how_str[k]
 
                 ans.append(Arow)
             return ans
@@ -1358,67 +1358,107 @@ def createTitleMap(title, titleMap):
         titleMap[title[i]] = i
 
 
-def query1(pull, pathf, pathr, uid, mid, resPath):
+def query1(pull, pathf, pathr, uid, mid, resPath, track_prov=0, how=0, where=False):
+
+    if track_prov is 0:
+        track_prov = False
+    else:
+        track_prov = True
+
+    if how is 0:
+        how = False
+    else:
+        how = True
+
     if pull == 1:
-        sf = Scan(filepath=pathf, outputs=None)
-        sr = Scan(filepath=pathr, outputs=None)
-        se1 = Select(inputs=[sf], predicate={"UID1": uid}, outputs=None)
-        se2 = Select(inputs=[sr], predicate={"MID": mid}, outputs=None)
+        sf = Scan(filepath=pathf, outputs=None, track_prov=track_prov, propagate_prov=how)
+        sr = Scan(filepath=pathr, outputs=None, track_prov=track_prov, propagate_prov=how)
+        se1 = Select(inputs=[sf], predicate={"UID1": uid}, outputs=None, track_prov=track_prov, propagate_prov=how)
+        se2 = Select(inputs=[sr], predicate={"MID": mid}, outputs=None, track_prov=track_prov, propagate_prov=how)
         join = Join(left_inputs=[se1], right_inputs=[se2], outputs=None, left_join_attribute="UID2",
-                    right_join_attribute="UID")
-        proj = Project(inputs=[join], outputs=None, fields_to_keep=["Rating"])
-        groupby = GroupBy(inputs=[proj], outputs=None, key="", value="Rating", agg_gun="AVG")
-        sink = Sink(inputs=[groupby], outputs=None, filepath=resPath)
+                    right_join_attribute="UID", track_prov=track_prov, propagate_prov=how)
+        proj = Project(inputs=[join], outputs=None, fields_to_keep=["Rating"], track_prov=track_prov, propagate_prov=how)
+        groupby = GroupBy(inputs=[proj], outputs=None, key="", value="Rating", agg_gun="AVG", track_prov=track_prov, propagate_prov=how)
+        sink = Sink(inputs=[groupby], outputs=None, filepath=resPath, track_prov=track_prov, propagate_prov=how)
         sink.get_next()
     else:
-        sink = Sink(inputs=None, outputs=None, filepath=resPath)
-        groupby = GroupBy(inputs=None, outputs=[sink], key="", value="Rating", agg_gun="AVG")
-        proj = Project(inputs=None, outputs=[groupby], fields_to_keep=["Rating"])
+        sink = Sink(inputs=None, outputs=None, filepath=resPath, track_prov=track_prov, propagate_prov=how)
+        groupby = GroupBy(inputs=None, outputs=[sink], key="", value="Rating", agg_gun="AVG", track_prov=track_prov, propagate_prov=how)
+        proj = Project(inputs=None, outputs=[groupby], fields_to_keep=["Rating"], track_prov=track_prov, propagate_prov=how)
         join = Join(left_inputs=None, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
-                    right_join_attribute="UID")
-        se1 = Select(inputs=None, predicate={"UID1": uid}, outputs=[join])
-        sf = Scan(filepath=pathf, outputs=[se1])
-        se2 = Select(inputs=None, predicate={"MID": mid}, outputs=[join])
-        sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
+                    right_join_attribute="UID", track_prov=track_prov, propagate_prov=how)
+        se1 = Select(inputs=None, predicate={"UID1": uid}, outputs=[join], track_prov=track_prov, propagate_prov=how)
+        sf = Scan(filepath=pathf, outputs=[se1], track_prov=track_prov, propagate_prov=how)
+        se2 = Select(inputs=None, predicate={"MID": mid}, outputs=[join], track_prov=track_prov, propagate_prov=how)
+        sr = Scan(filepath=pathr, isleft=False, outputs=[se2], track_prov=track_prov, propagate_prov=how)
         sf.start()
         sr.start()
     pass
 
 
-def query2(pull, pathf, pathr, uid, mid, resPath):
+def query2(pull, pathf, pathr, uid, mid, resPath, track_prov=0, how=0, where=False):
+    if track_prov is 0:
+        track_prov=False
+    else:
+        track_prov=True
+
+    if how is 0:
+        how=False
+    else:
+        how=True
+
     if pull == 1:
-        sf = Scan(filepath=pathf, outputs=None)
-        sr = Scan(filepath=pathr, outputs=None)
-        se1 = Select(inputs=[sf], predicate={"UID1": uid}, outputs=None)
-        se2 = Select(inputs=[sr], predicate=None, outputs=None)
+        sf = Scan(filepath=pathf, outputs=None, track_prov=track_prov, propagate_prov=how)
+        sr = Scan(filepath=pathr, outputs=None, track_prov=track_prov, propagate_prov=how)
+        se1 = Select(inputs=[sf], predicate={"UID1": uid}, outputs=None, track_prov=track_prov, propagate_prov=how)
+        se2 = Select(inputs=[sr], predicate=None, outputs=None, track_prov=track_prov, propagate_prov=how)
         join = Join(left_inputs=[se1], right_inputs=[se2], outputs=None, left_join_attribute="UID2",
-                    right_join_attribute="UID")
-        proj = Project(inputs=[join], outputs=None, fields_to_keep=["MID", "Rating"])
-        groupby = GroupBy(inputs=[proj], outputs=None, key="MID", value="Rating", agg_gun="AVG")
-        orderby = OrderBy(inputs=[groupby], outputs=None, comparator="Rating", ASC=False)
-        topk = TopK(inputs=[orderby], outputs=None, k=1)
-        pj = Project(inputs=[topk], outputs=None, fields_to_keep=["MID"])
-        sink = Sink(inputs=[pj], outputs=None, filepath=resPath)
+                    right_join_attribute="UID", track_prov=track_prov, propagate_prov=how)
+        proj = Project(inputs=[join], outputs=None, fields_to_keep=["MID", "Rating"], track_prov=track_prov,
+                       propagate_prov=how)
+        groupby = GroupBy(inputs=[proj], outputs=None, key="MID", value="Rating", agg_gun="AVG", track_prov=track_prov,
+                          propagate_prov=how)
+        orderby = OrderBy(inputs=[groupby], outputs=None, comparator="Rating", ASC=False, track_prov=track_prov,
+                          propagate_prov=how)
+        topk = TopK(inputs=[orderby], outputs=None, k=1, track_prov=track_prov, propagate_prov=how)
+        pj = Project(inputs=[topk], outputs=None, fields_to_keep=["MID"], track_prov=track_prov, propagate_prov=how)
+        sink = Sink(inputs=[pj], outputs=None, filepath=resPath, track_prov=track_prov, propagate_prov=how)
         sink.get_next()
     else:
-        sink = Sink(inputs=None, outputs=None, filepath=resPath)
-        pj = Project(inputs=None, outputs=[sink], fields_to_keep=["MID"])
-        topk = TopK(inputs=None, outputs=[pj], k=1)
-        orderby = OrderBy(inputs=None, outputs=[topk], comparator="Rating", ASC=False)
-        gb = GroupBy(inputs=None, outputs=[orderby], key="MID", value="Rating", agg_gun="AVG")
-        proj = Project(inputs=None, outputs=[gb], fields_to_keep=["MID", "Rating"])
+        sink = Sink(inputs=None, outputs=None, filepath=resPath, track_prov=track_prov, propagate_prov=how)
+        pj = Project(inputs=None, outputs=[sink], fields_to_keep=["MID"], track_prov=track_prov, propagate_prov=how)
+        topk = TopK(inputs=None, outputs=[pj], k=1, track_prov=track_prov, propagate_prov=how)
+        orderby = OrderBy(inputs=None, outputs=[topk], comparator="Rating", ASC=False, track_prov=track_prov,
+                          propagate_prov=how)
+        gb = GroupBy(inputs=None, outputs=[orderby], key="MID", value="Rating", agg_gun="AVG", track_prov=track_prov,
+                     propagate_prov=how)
+        proj = Project(inputs=None, outputs=[gb], fields_to_keep=["MID", "Rating"], track_prov=track_prov,
+                       propagate_prov=how)
         join = Join(left_inputs=None, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
-                    right_join_attribute="UID")
-        se1 = Select(inputs=None, predicate={"UID1": uid}, outputs=[join])
-        sf = Scan(filepath=pathf, outputs=[se1])
-        se2 = Select(inputs=None, predicate=None, outputs=[join])
-        sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
+                    right_join_attribute="UID", track_prov=track_prov, propagate_prov=how)
+        se1 = Select(inputs=None, predicate={"UID1": uid}, outputs=[join], track_prov=track_prov, propagate_prov=how)
+        sf = Scan(filepath=pathf, outputs=[se1], track_prov=track_prov, propagate_prov=how)
+        se2 = Select(inputs=None, predicate=None, outputs=[join], track_prov=track_prov, propagate_prov=how)
+        sr = Scan(filepath=pathr, isleft=False, outputs=[se2], track_prov=track_prov, propagate_prov=how)
         sf.start()
         sr.start()
+        for output in sink.output[1]:
+            print(output.how())
     pass
 
 
-def query3(pull, pathf, pathr, uid, mid, resPath):
+def query3(pull, pathf, pathr, uid, mid, resPath, track_prov=0, how=0, where=False):
+
+    if track_prov is 0:
+        track_prov = False
+    else:
+        track_prov = True
+
+    if how is 0:
+        how = False
+    else:
+        how = True
+
     if pull == 1:
         sf = Scan(filepath=pathf, outputs=None)
         sr = Scan(filepath=pathr, outputs=None)
@@ -1442,9 +1482,9 @@ def query3(pull, pathf, pathr, uid, mid, resPath):
         sr = Scan(filepath=pathr, isleft=False, outputs=[se2])
         sf.start()
         sr.start()
+    pass
 
 
-pass
 
 if __name__ == "__main__":
     logger.info("Assignment #1")
@@ -1465,21 +1505,25 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-q", "--query", type=int, help="task number")
-    parser.add_argument("-f", "--ff", help="filepath", default='../data/friends.txt')
-    parser.add_argument("-m", "--mf", help="filepath", default='../data/movie_ratings.txt')
-    parser.add_argument("-uid", "--uid", help="uid")
+    parser.add_argument("-q", "--query", type=int, help="task number",default=2)
+    parser.add_argument("-f", "--ff", help="filepath", default='../data/lin_f.txt')
+    parser.add_argument("-m", "--mf", help="filepath", default='../data/lin_m.txt')
+    parser.add_argument("-uid", "--uid", help="uid",default=0)
     parser.add_argument("-mid", "--mid", help="mid")
     parser.add_argument("-p", "--pull", type=int, default=0, help="pull")
     parser.add_argument("-o", "--output", help="filepath", default='../data/res.txt')
+
+    parser.add_argument("-l", "--lineage", help="lineage",type=int)
+    parser.add_argument("-h", "--how", help="how provenance", type=int)
+    parser.add_argument("-r", "--responsibility", help="responsibility", type=int)
     args = parser.parse_args()
 
     if args.query == 1:
-        query1(args.pull, args.ff, args.mf, args.uid, args.mid, args.output)
+        query1(args.pull, args.ff, args.mf, args.uid, args.mid, args.output,args.lineage,args.how)
     elif args.query == 2:
-        query2(args.pull, args.ff, args.mf, args.uid, args.mid, args.output)
+        query2(args.pull, args.ff, args.mf, args.uid, args.mid, args.output,args.lineage,args.how)
     elif args.query == 3:
-        query3(args.pull, args.ff, args.mf, args.uid, args.mid, args.output)
+        query3(args.pull, args.ff, args.mf, args.uid, args.mid, args.output,args.lineage,args.how)
 
     # TASK 2: Implement recommendation query for User A
     #
