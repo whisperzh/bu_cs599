@@ -54,6 +54,7 @@ class ATuple:
 
     # Returns the Where-provenance of the attribute at index 'att_index' of self
     def where(self, att_index) -> List[Tuple]:
+        return self.operator.where(att_index, [self])
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
         pass
 
@@ -173,6 +174,7 @@ class Scan(Operator):
         if track_prov:
             self.l_map = {}
         self.row_idx = 1
+        self.idx_map = {}
 
         pass
 
@@ -204,6 +206,12 @@ class Scan(Operator):
     # Returns the where-provenance of the attribute
     # at index 'att_index' for each tuple in 'tuples'
     def where(self, att_index, tuples):
+        ans = []
+        # [ (input_filename, line_number, tuple, attribute_value) ]
+        for t in tuples:
+            item = [self.filepath, self.idx_map[t.__hash__()], t.tuple, t.tuple[self.titleMap[att_index]]]
+            ans.append(item)
+        return ans
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
         pass
 
@@ -235,7 +243,7 @@ class Scan(Operator):
                     yield bat
                     count = 1
                     Arow = ATuple(tuple(row))
-
+                    self.idx_map[Arow.__hash__()]=self.row_idx
                     # lineage
                     if self.track_prov:
                         self.l_map[Arow.__hash__()] = Arow.tuple
@@ -252,7 +260,7 @@ class Scan(Operator):
                 else:
                     count += 1
                     Arow = ATuple(tuple(row))
-
+                    self.idx_map[Arow.__hash__()]=self.row_idx
                     # lineage
                     if self.track_prov:
                         self.l_map[Arow.__hash__()] = Arow.tuple
@@ -458,10 +466,9 @@ class Join(Operator):
                             Arow.metadata['how'] = left_tuples.metadata['how'] + '*' + rig.metadata['how']
 
                         data[1].append(Arow)
-                    if self.next1 is None:
-                        self.next1 = left_tuples.operator
-                    if self.next2 is None:
-                        self.next2 = rig.operator
+                    self.next1 = left_tuples.operator
+                    self.next2 = rig.operator
+
                 data[0] = ATuple(self.titleL + self.titleR)
 
                 self.pushNxt.apply(data)
@@ -484,10 +491,10 @@ class Join(Operator):
                         Arow.metadata['how'] = lef.metadata['how'] + '*' + right_tuples.metadata['how']
 
                     data[1].append(Arow)
-                if self.next1 is None:
-                    self.next1 = lef.operator
-                if self.next2 is None:
-                    self.next2 = right_tuples.operator
+
+                self.next1 = lef.operator
+                self.next2 = right_tuples.operator
+
             data[0] = ATuple(self.titleL + self.titleR)
             self.pushNxt.apply(data)
 
@@ -625,8 +632,7 @@ class Project(Operator):
                 if self.track_prov:
                     self.lineage_map[Arow.__hash__()] = d
                     Arow.operator = self
-                    if self.next_opt is None:
-                        self.next_opt = d.operator
+                self.next_opt = d.operator
 
                 # how provenance
                 if self.propagate_prov:
@@ -708,7 +714,7 @@ class GroupBy(Operator):
 
                     # how provenance
                     if self.propagate_prov:
-                        how_p = '('+d.metadata['how'] + '@' + d.tuple[value]+'),'
+                        how_p = '(' + d.metadata['how'] + '@' + d.tuple[value] + '),'
                         self.how_map[d.tuple[key]] += how_p
 
                     # lineage
@@ -722,8 +728,8 @@ class GroupBy(Operator):
 
                     # how provenance
                     if self.propagate_prov:
-                        how_p = '('+d.metadata['how'] + '@' + d.tuple[value]+'),'
-                        self.how_map[d.tuple[key]] = 'AVG ('+ how_p
+                        how_p = '(' + d.metadata['how'] + '@' + d.tuple[value] + '),'
+                        self.how_map[d.tuple[key]] = 'AVG (' + how_p
 
             for k in dic.keys():
                 dic[k] /= diclen[k]
@@ -734,7 +740,7 @@ class GroupBy(Operator):
                 # how provenance
                 if self.propagate_prov:
                     Arow.metadata = {}
-                    Arow.metadata['how'] = self.how_map[k][:-1]+')'
+                    Arow.metadata['how'] = self.how_map[k][:-1] + ')'
 
                 ans.append(Arow)
             return ans
@@ -743,10 +749,11 @@ class GroupBy(Operator):
             if len(data) is not 0:
                 sum = 0
                 if self.propagate_prov:
-                    how ='AVG ('
+                    how = 'AVG ('
                 for d in data:
                     sum += int(d.tuple[0])
-                    how += '('+d.metadata['how'] + '@' + d.tuple[0]+'),'
+                    if self.propagate_prov:
+                        how += '(' + d.metadata['how'] + '@' + d.tuple[0] + '),'
                 ans = sum / len(data)
                 Arow = ATuple([str(ans)])
                 if self.track_prov:
@@ -755,7 +762,7 @@ class GroupBy(Operator):
 
                 if self.propagate_prov:
                     Arow.metadata = {}
-                    Arow.metadata['how'] = how[:-1]+')'
+                    Arow.metadata['how'] = how[:-1] + ')'
 
                 return [Arow]
             else:
@@ -818,9 +825,7 @@ class GroupBy(Operator):
             self.titleMap = {}
             createTitleMap(self.title, self.titleMap)
             for d in tuples[1]:
-                if self.track_prov:
-                    if self.next_opt is None:
-                        self.next_opt = d.operator
+                self.next_opt = d.operator
                 self.data.append(d)
         return
 
@@ -925,9 +930,8 @@ class Histogram(Operator):
                 val = dic.get(key, 0)
                 val += 1
                 dic[key] = val
+                self.next_opt = d.operator
                 if self.track_prov:
-                    if self.next_opt is None:
-                        self.next_opt = d.operator
                     if val == 1:
                         self.lineage_map[key] = [d]
                     else:
@@ -1048,9 +1052,8 @@ class OrderBy(Operator):
             self.titleMap = {}
             createTitleMap(self.title, self.titleMap)
             for d in data_raw:
+                self.next_opt = d.operator
                 if self.track_prov:
-                    if self.next_opt is None:
-                        self.next_opt = d.operator
                     d.operator = self
                 self.data.append(d)
 
@@ -1102,6 +1105,7 @@ class TopK(Operator):
             self.pushNxt = outputs[0]
         self.k = k
         self.track_prov = track_prov
+
         # YOUR CODE HERE
         pass
 
@@ -1138,8 +1142,7 @@ class TopK(Operator):
             data = tuples[1][0:self.k]
             if self.track_prov:
                 for d in data:
-                    if self.next_opts is None:
-                        self.next_opts = d.operator
+                    self.next_opts = d.operator
                     d.operator = self
             self.pushNxt.apply([tuples[0], data])
         pass
@@ -1171,6 +1174,7 @@ class Sink(Operator):
                  outputs,
                  filepath,
                  track_prov=False,
+                 pro_output=None,
                  block=False,
                  propagate_prov=False,
                  pull=True,
@@ -1181,6 +1185,7 @@ class Sink(Operator):
                                    pull=pull,
                                    partition_strategy=partition_strategy)
         # YOUR CODE HERE
+        self.pro_output=pro_output # a dict
         self.fileoutput = filepath
         if inputs is not None:
             self.next_opt = inputs[0]
@@ -1233,11 +1238,28 @@ class Sink(Operator):
         f = open(self.fileoutput, 'w', newline='')
 
         # create the csv writer
-        writer = csv.writer(f, delimiter=',')
-        writer.writerow(self.output[0].tuple)
-        for row in self.output[1]:
-            # write a row to the csv file
-            writer.writerow(row.tuple)
+
+        if self.pro_output is None:
+            writer = csv.writer(f, delimiter=',')
+            writer.writerow(self.output[0].tuple)
+            for row in self.output[1]:
+                # write a row to the csv file
+                writer.writerow(row.tuple)
+        else:
+            writer = csv.writer(f, delimiter=' ')
+            # lineage output
+            if self.pro_output.get('lineage',None) is True:
+                for t in self.output[1]:
+                    row=str(t.lineage())+'\n'
+                    f.write(row)
+            if self.pro_output.get('how',None) is True:
+                for t in self.output[1]:
+                    row=str(t.how())+'\n'
+                    f.write(row)
+            if self.pro_output.get('where',None) is True:
+                for t in self.output[1]:
+                    row=str(t.where())+'\n'
+                    f.write(row)
 
         # close the file
         f.close()
@@ -1355,7 +1377,6 @@ def createTitleMap(title, titleMap):
 
 
 def query1(pull, pathf, pathr, uid, mid, resPath, track_prov=0, how=0, where=False):
-
     if track_prov is 0:
         track_prov = False
     else:
@@ -1373,14 +1394,18 @@ def query1(pull, pathf, pathr, uid, mid, resPath, track_prov=0, how=0, where=Fal
         se2 = Select(inputs=[sr], predicate={"MID": mid}, outputs=None, track_prov=track_prov, propagate_prov=how)
         join = Join(left_inputs=[se1], right_inputs=[se2], outputs=None, left_join_attribute="UID2",
                     right_join_attribute="UID", track_prov=track_prov, propagate_prov=how)
-        proj = Project(inputs=[join], outputs=None, fields_to_keep=["Rating"], track_prov=track_prov, propagate_prov=how)
-        groupby = GroupBy(inputs=[proj], outputs=None, key="", value="Rating", agg_gun="AVG", track_prov=track_prov, propagate_prov=how)
+        proj = Project(inputs=[join], outputs=None, fields_to_keep=["Rating"], track_prov=track_prov,
+                       propagate_prov=how)
+        groupby = GroupBy(inputs=[proj], outputs=None, key="", value="Rating", agg_gun="AVG", track_prov=track_prov,
+                          propagate_prov=how)
         sink = Sink(inputs=[groupby], outputs=None, filepath=resPath, track_prov=track_prov, propagate_prov=how)
         sink.get_next()
     else:
         sink = Sink(inputs=None, outputs=None, filepath=resPath, track_prov=track_prov, propagate_prov=how)
-        groupby = GroupBy(inputs=None, outputs=[sink], key="", value="Rating", agg_gun="AVG", track_prov=track_prov, propagate_prov=how)
-        proj = Project(inputs=None, outputs=[groupby], fields_to_keep=["Rating"], track_prov=track_prov, propagate_prov=how)
+        groupby = GroupBy(inputs=None, outputs=[sink], key="", value="Rating", agg_gun="AVG", track_prov=track_prov,
+                          propagate_prov=how)
+        proj = Project(inputs=None, outputs=[groupby], fields_to_keep=["Rating"], track_prov=track_prov,
+                       propagate_prov=how)
         join = Join(left_inputs=None, right_inputs=None, outputs=[proj], left_join_attribute="UID2",
                     right_join_attribute="UID", track_prov=track_prov, propagate_prov=how)
         se1 = Select(inputs=None, predicate={"UID1": uid}, outputs=[join], track_prov=track_prov, propagate_prov=how)
@@ -1394,14 +1419,14 @@ def query1(pull, pathf, pathr, uid, mid, resPath, track_prov=0, how=0, where=Fal
 
 def query2(pull, pathf, pathr, uid, mid, resPath, track_prov=0, how=0, where=False):
     if track_prov is 0:
-        track_prov=False
+        track_prov = False
     else:
-        track_prov=True
+        track_prov = True
 
     if how is 0:
-        how=False
+        how = False
     else:
-        how=True
+        how = True
 
     if pull == 1:
         sf = Scan(filepath=pathf, outputs=None, track_prov=track_prov, propagate_prov=how)
@@ -1418,7 +1443,7 @@ def query2(pull, pathf, pathr, uid, mid, resPath, track_prov=0, how=0, where=Fal
                           propagate_prov=how)
         topk = TopK(inputs=[orderby], outputs=None, k=1, track_prov=track_prov, propagate_prov=how)
         pj = Project(inputs=[topk], outputs=None, fields_to_keep=["MID"], track_prov=track_prov, propagate_prov=how)
-        sink = Sink(inputs=[pj], outputs=None, filepath=resPath, track_prov=track_prov, propagate_prov=how)
+        sink = Sink(inputs=[pj], outputs=None, filepath=resPath,pro_output={'how':how,'lineage':track_prov,'where':False}, track_prov=track_prov, propagate_prov=how)
         sink.get_next()
     else:
         sink = Sink(inputs=None, outputs=None, filepath=resPath, track_prov=track_prov, propagate_prov=how)
@@ -1444,7 +1469,6 @@ def query2(pull, pathf, pathr, uid, mid, resPath, track_prov=0, how=0, where=Fal
 
 
 def query3(pull, pathf, pathr, uid, mid, resPath, track_prov=0, how=0, where=False):
-
     if track_prov is 0:
         track_prov = False
     else:
@@ -1482,6 +1506,9 @@ def query3(pull, pathf, pathr, uid, mid, resPath, track_prov=0, how=0, where=Fal
 
 
 
+
+
+
 if __name__ == "__main__":
     logger.info("Assignment #1")
 
@@ -1501,25 +1528,27 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-q", "--query", type=int, help="task number",default=2)
+    parser.add_argument("-q", "--query", type=int, help="task number", default=2)
     parser.add_argument("-f", "--ff", help="filepath", default='../data/lin_f.txt')
     parser.add_argument("-m", "--mf", help="filepath", default='../data/lin_m.txt')
-    parser.add_argument("-uid", "--uid", help="uid",default=0)
+    parser.add_argument("-uid", "--uid", help="uid", default=0)
     parser.add_argument("-mid", "--mid", help="mid")
-    parser.add_argument("-p", "--pull", type=int, default=0, help="pull")
+    parser.add_argument("-p", "--pull", type=int, default=1, help="pull")
     parser.add_argument("-o", "--output", help="filepath", default='../data/res.txt')
 
-    parser.add_argument("-l", "--lineage", help="lineage",type=int)
-    parser.add_argument("-h", "--how", help="how provenance", type=int)
-    parser.add_argument("-r", "--responsibility", help="responsibility", type=int)
+    parser.add_argument("-lin", "--lineage", help="lineage", type=int,default=1)
+    parser.add_argument("-how", "--how", help="how provenance", type=int,default=1)
+    parser.add_argument("-res", "--responsibility", help="responsibility", type=int,default=0)
     args = parser.parse_args()
 
     if args.query == 1:
-        query1(args.pull, args.ff, args.mf, args.uid, args.mid, args.output,args.lineage,args.how)
+        query1(args.pull, args.ff, args.mf, args.uid, args.mid, args.output, args.lineage, args.how)
     elif args.query == 2:
-        query2(args.pull, args.ff, args.mf, args.uid, args.mid, args.output,args.lineage,args.how)
+        query2(args.pull, args.ff, args.mf, args.uid, args.mid, args.output, args.lineage, args.how)
     elif args.query == 3:
-        query3(args.pull, args.ff, args.mf, args.uid, args.mid, args.output,args.lineage,args.how)
+        query3(args.pull, args.ff, args.mf, args.uid, args.mid, args.output, args.lineage, args.how)
+
+    logger.debug("done")
 
     # TASK 2: Implement recommendation query for User A
     #

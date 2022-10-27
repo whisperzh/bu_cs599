@@ -79,10 +79,10 @@ def test_push_groupby():
     sr = Scan(filepath=pathr, track_prov=True, isleft=False, outputs=[se2])
     sf.start()
     sr.start()
-
     answer = [('1', '1'), ('1', '1', '1'), ]
     temp = sink.output[1]
     lineage = temp[0].lineage()
+
     assert lineage == answer
     pass
 
@@ -180,7 +180,7 @@ def test_pull_select():
 def test_1():
     sf = Scan(filepath="../data/lin_f.txt",propagate_prov=True, track_prov=True, outputs=None)
     se = Select(inputs=[sf], predicate={"UID1": 0}, propagate_prov=True,track_prov=True, outputs=None)
-    sr = Scan(filepath="../data/lin_m.txt", track_prov=True,propagate_prov=True, isLeft=False,outputs=None)
+    sr = Scan(filepath="../data/lin_m.txt", track_prov=True,propagate_prov=True, isleft=False,outputs=None)
     se1 = Select(inputs=[sr], predicate=None ,track_prov=True,propagate_prov=True, outputs=None)
     join = Join(left_inputs=[se], right_inputs=[se1], outputs=None, propagate_prov=True,track_prov=True, left_join_attribute="UID2",
                 right_join_attribute="UID")
@@ -207,17 +207,13 @@ def test_2():
     sr = Scan(filepath="../data/lin_m.txt",  propagate_prov=True,track_prov=True, isleft=False, outputs=[se2])
     sf.start()
     sr.start()
-
     answer = [('0', '1'), ('1', '10', '5'),('0', '4'), ('4', '10', '8'), ('0', '18'),  ('18', '10', '2')]
-
     temp = sink.output[1]
     how = temp[0].how()
     print(how)
     lineage = temp[0].lineage()
     assert lineage == answer
     pass
-
-test_2()
 
 
 
