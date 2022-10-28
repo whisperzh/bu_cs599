@@ -752,8 +752,8 @@ class GroupBy(Operator):
 
                     # how provenance
                     if self.propagate_prov:
-                        how_p = '(' + d.metadata['how'] + '@' + d.tuple[value] + '),'
-                        self.how_map[d.tuple[key]] = 'AVG (' + how_p
+                        how_p = '(' + d.metadata['how'] + '@' + d.tuple[value] + '), '
+                        self.how_map[d.tuple[key]] = 'AVG( ' + how_p
 
             for k in dic.keys():
                 dic[k] /= diclen[k]
@@ -764,7 +764,7 @@ class GroupBy(Operator):
                 # how provenance
                 if self.propagate_prov:
                     Arow.metadata = {}
-                    Arow.metadata['how'] = self.how_map[k][:-1] + ')'
+                    Arow.metadata['how'] = self.how_map[k][:-2] + ' )'
 
                 ans.append(Arow)
             return ans
@@ -1429,10 +1429,7 @@ def output2file(rows,filepath='../data/res.txt'):
     pass
 
 def query1(pull, pathf, pathr, uid, mid, resPath, track_prov=1, where_row=0, where_attribute=0):
-    if track_prov is 0:
-        track_prov = False
-    else:
-        track_prov = True
+    track_prov = True
     if pull == 1:
         sf = Scan(filepath=pathf, outputs=None, track_prov=track_prov)
         sr = Scan(filepath=pathr, outputs=None, track_prov=track_prov)
@@ -1540,6 +1537,7 @@ def query2(pull, pathf, pathr, uid, mid, resPath, track_prov=0, how=0):
             howp=[]
             for p in output:
                 howp.append(p.how())
+                logger.info(p.how())
             output2file(howp)
         if track_prov is True:
             lin = []
