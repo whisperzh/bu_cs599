@@ -209,7 +209,7 @@ class Scan(Operator):
         ans = []
         # [ (input_filename, line_number, tuple, attribute_value) ]
         for t in tuples:
-            item = [self.filepath, self.idx_map[t.__hash__()], t.tuple, t.tuple[self.titleMap[att_index]]]
+            item = (self.filepath.split('/')[-1], self.idx_map[t.__hash__()], t.tuple, t.tuple[att_index])
             ans.append(item)
         return ans
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
@@ -243,7 +243,7 @@ class Scan(Operator):
                     yield bat
                     count = 1
                     Arow = ATuple(tuple(row))
-                    self.idx_map[Arow.__hash__()]=self.row_idx
+                    self.idx_map[Arow.__hash__()] = self.row_idx
                     # lineage
                     if self.track_prov:
                         self.l_map[Arow.__hash__()] = Arow.tuple
@@ -260,7 +260,7 @@ class Scan(Operator):
                 else:
                     count += 1
                     Arow = ATuple(tuple(row))
-                    self.idx_map[Arow.__hash__()]=self.row_idx
+                    self.idx_map[Arow.__hash__()] = self.row_idx
                     # lineage
                     if self.track_prov:
                         self.l_map[Arow.__hash__()] = Arow.tuple
@@ -420,6 +420,19 @@ class Join(Operator):
     # Returns the where-provenance of the attribute
     # at index 'att_index' for each tuple in 'tuples'
     def where(self, att_index, tuples):
+        ans = []
+        for t in tuples:
+            if 0 <= att_index < len(self.titleL):
+                w_l = self.next1.where(att_index, [ATuple(t.tuple[0:len(self.titleL)])])
+                if isinstance(w_l, list):
+                    for l in w_l:
+                        ans.append(l)
+            else:
+                w_r = self.next2.where(att_index - len(self.titleL), [ATuple(t.tuple[len(self.titleL):])])
+                if isinstance(w_r, list):
+                    for r in w_r:
+                        ans.append(r)
+        return ans
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
         pass
 
@@ -552,7 +565,8 @@ class Project(Operator):
         if outputs is not None:
             self.pushNxt = outputs[0]
         self.track_prov = track_prov
-        self.lineage_map = {}
+        self.io_tuple_map = {}
+        self.titleMap = {}
         pass
 
     # Return next batch of projected tuples (or None if done)
@@ -560,8 +574,7 @@ class Project(Operator):
         data = self.next_opt.get_next()
         title = data[0].tuple
         ans = [ATuple(self.fields_to_keep)]
-        titleMap = {}
-        createTitleMap(title, titleMap)
+        createTitleMap(title, self.titleMap)
 
         ans.append([])
         data = data[1]
@@ -569,10 +582,10 @@ class Project(Operator):
         for d in data:
             item = []
             for t in self.fields_to_keep:
-                item.append(d.tuple[titleMap[t]])
+                item.append(d.tuple[self.titleMap[t]])
             Arow = ATuple(tuple(item))
             if self.track_prov:
-                self.lineage_map[Arow.__hash__()] = d
+                self.io_tuple_map[Arow.__hash__()] = d
                 Arow.operator = self
 
             # how provenance
@@ -591,7 +604,7 @@ class Project(Operator):
         # needtodo tuples-> original tuple
         ans = []
         for t in tuples:
-            original_tuple = self.lineage_map.get(t.__hash__(), None)
+            original_tuple = self.io_tuple_map.get(t.__hash__(), None)
             tmp = self.next_opt.lineage([original_tuple])
             if isinstance(tmp, list):
                 for item in tmp:
@@ -604,6 +617,18 @@ class Project(Operator):
     # Returns the where-provenance of the attribute
     # at index 'att_index' for each tuple in 'tuples'
     def where(self, att_index, tuples):
+        idx = att_index
+        if self.fields_to_keep is not None:
+            name = self.fields_to_keep[att_index]  # get the original name
+            idx = self.titleMap[name]  # lookup the name in dic
+        waiting_List=[]
+        for t in tuples:
+            original_tuple = self.io_tuple_map.get(t.__hash__(), None)
+            waiting_List.append(original_tuple)
+        where = self.next_opt.where(idx, waiting_List)
+
+        return where
+
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
         pass
 
@@ -616,21 +641,20 @@ class Project(Operator):
             title = tuples[0].tuple
             data = tuples[1]
             ans = [[], []]
-            titleMap = {}
             if self.fields_to_keep == None:
                 self.pushNxt.apply(tuples)
                 return
-            createTitleMap(title, titleMap)
+            createTitleMap(title, self.titleMap)
             ans[0] = ATuple(self.fields_to_keep)
             # schema
 
             for d in data:
                 item = []
                 for t in self.fields_to_keep:
-                    item.append(d.tuple[titleMap[t]])
+                    item.append(d.tuple[self.titleMap[t]])
                 Arow = ATuple(item)
                 if self.track_prov:
-                    self.lineage_map[Arow.__hash__()] = d
+                    self.io_tuple_map[Arow.__hash__()] = d
                     Arow.operator = self
                 self.next_opt = d.operator
 
@@ -693,7 +717,7 @@ class GroupBy(Operator):
         self.agg = agg_gun
         self.data = []
         self.track_prov = track_prov
-        self.lineage_original_tuples = {}
+        self.original_tuple_map = {}
         # YOUR CODE HERE
         pass
 
@@ -704,7 +728,7 @@ class GroupBy(Operator):
         if key is not None:
             ans = []
             if self.track_prov:
-                self.lineage_original_tuples = {}
+                self.original_tuple_map = {}
             if self.propagate_prov:
                 self.how_map = {}
             for d in data:
@@ -718,13 +742,13 @@ class GroupBy(Operator):
                         self.how_map[d.tuple[key]] += how_p
 
                     # lineage
-                    if self.track_prov:
-                        self.lineage_original_tuples[d.tuple[key]].append(d)
+                    if self.track_prov:                                 # use self.key to track , however where use value
+                        self.original_tuple_map[d.tuple[key]].append(d)
                 else:
                     dic[d.tuple[key]] = int(d.tuple[value])
                     diclen[d.tuple[key]] = 1
                     if self.track_prov:
-                        self.lineage_original_tuples[d.tuple[key]] = [d]
+                        self.original_tuple_map[d.tuple[key]] = [d]
 
                     # how provenance
                     if self.propagate_prov:
@@ -757,7 +781,7 @@ class GroupBy(Operator):
                 ans = sum / len(data)
                 Arow = ATuple([str(ans)])
                 if self.track_prov:
-                    self.lineage_original_tuples[str(ans)] = data
+                    self.original_tuple_map[str(ans)] = data
                     Arow.operator = self
 
                 if self.propagate_prov:
@@ -793,7 +817,7 @@ class GroupBy(Operator):
             key = 0
             if self.key:
                 key = self.titleMap[self.key]
-            for i in self.lineage_original_tuples[t.tuple[key]]:
+            for i in self.original_tuple_map[t.tuple[key]]:
                 tmp = self.next_opt.lineage([i])
                 if isinstance(tmp, list):
                     for item in tmp:
@@ -808,6 +832,18 @@ class GroupBy(Operator):
     # at index 'att_index' for each tuple in 'tuples'
     def where(self, att_index, tuples):
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
+        where=[]
+        for t in tuples:
+            if self.key:
+                key = self.titleMap[self.key]
+                for i in self.original_tuple_map[t.tuple[key]]:
+                    where.append(i)
+            else:
+                for i in self.original_tuple_map[t.tuple[0]]:
+                    where.append(i)
+
+        w = self.next_opt.where(att_index,where)
+        return w
         pass
 
     # Applies the operator logic to the given list of tuples
@@ -817,6 +853,7 @@ class GroupBy(Operator):
             if self.agg == "AVG":
                 ans[1] = self.AVG(self.data, self.titleMap.get(self.key, None), self.titleMap[self.value])
             self.pushNxt.apply(ans)
+            self.pushNxt.apply([ans[0]])
             return
         # end of file
 
@@ -1185,7 +1222,7 @@ class Sink(Operator):
                                    pull=pull,
                                    partition_strategy=partition_strategy)
         # YOUR CODE HERE
-        self.pro_output=pro_output # a dict
+        self.pro_output = pro_output  # a dict
         self.fileoutput = filepath
         if inputs is not None:
             self.next_opt = inputs[0]
@@ -1248,17 +1285,17 @@ class Sink(Operator):
         else:
             writer = csv.writer(f, delimiter=' ')
             # lineage output
-            if self.pro_output.get('lineage',None) is True:
+            if self.pro_output.get('lineage', None) is True:
                 for t in self.output[1]:
-                    row=str(t.lineage())+'\n'
+                    row = str(t.lineage()) + '\n'
                     f.write(row)
-            if self.pro_output.get('how',None) is True:
+            if self.pro_output.get('how', None) is True:
                 for t in self.output[1]:
-                    row=str(t.how())+'\n'
+                    row = str(t.how()) + '\n'
                     f.write(row)
-            if self.pro_output.get('where',None) is True:
+            if self.pro_output.get('where', None) is True:
                 for t in self.output[1]:
-                    row=str(t.where())+'\n'
+                    row = str(t.where()) + '\n'
                     f.write(row)
 
         # close the file
@@ -1338,6 +1375,10 @@ class Select(Operator):
                         d.operator = self
                     ans[1].append(d)
         return ans
+        pass
+
+    def where(self, att_index, tuples):
+        return self.next_opt.where(att_index, tuples)
         pass
 
     def lineage(self, tuples: List[ATuple]) -> List[List[ATuple]]:
@@ -1430,7 +1471,7 @@ def query2(pull, pathf, pathr, uid, mid, resPath, track_prov=0, how=0, where=Fal
 
     if pull == 1:
         sf = Scan(filepath=pathf, outputs=None, track_prov=track_prov, propagate_prov=how)
-        sr = Scan(filepath=pathr, outputs=None, track_prov=track_prov, propagate_prov=how)
+        sr = Scan(filepath=pathr, outputs=None, isleft=False, track_prov=track_prov, propagate_prov=how)
         se1 = Select(inputs=[sf], predicate={"UID1": uid}, outputs=None, track_prov=track_prov, propagate_prov=how)
         se2 = Select(inputs=[sr], predicate=None, outputs=None, track_prov=track_prov, propagate_prov=how)
         join = Join(left_inputs=[se1], right_inputs=[se2], outputs=None, left_join_attribute="UID2",
@@ -1443,10 +1484,14 @@ def query2(pull, pathf, pathr, uid, mid, resPath, track_prov=0, how=0, where=Fal
                           propagate_prov=how)
         topk = TopK(inputs=[orderby], outputs=None, k=1, track_prov=track_prov, propagate_prov=how)
         pj = Project(inputs=[topk], outputs=None, fields_to_keep=["MID"], track_prov=track_prov, propagate_prov=how)
-        sink = Sink(inputs=[pj], outputs=None, filepath=resPath,pro_output={'how':how,'lineage':track_prov,'where':False}, track_prov=track_prov, propagate_prov=how)
+        sink = Sink(inputs=[pj], outputs=None, filepath=resPath,
+                    pro_output={'how': how, 'lineage': track_prov, 'where': False}, track_prov=track_prov,
+                    propagate_prov=how)
         sink.get_next()
     else:
-        sink = Sink(inputs=None, outputs=None, filepath=resPath, track_prov=track_prov, propagate_prov=how)
+        sink = Sink(inputs=None, pro_output={'how': how, 'lineage': track_prov, 'where': False}, block=True,
+                    outputs=None,
+                    filepath=resPath, track_prov=track_prov, propagate_prov=how)
         pj = Project(inputs=None, outputs=[sink], fields_to_keep=["MID"], track_prov=track_prov, propagate_prov=how)
         topk = TopK(inputs=None, outputs=[pj], k=1, track_prov=track_prov, propagate_prov=how)
         orderby = OrderBy(inputs=None, outputs=[topk], comparator="Rating", ASC=False, track_prov=track_prov,
@@ -1463,8 +1508,6 @@ def query2(pull, pathf, pathr, uid, mid, resPath, track_prov=0, how=0, where=Fal
         sr = Scan(filepath=pathr, isleft=False, outputs=[se2], track_prov=track_prov, propagate_prov=how)
         sf.start()
         sr.start()
-        for output in sink.output[1]:
-            print(output.how())
     pass
 
 
@@ -1505,10 +1548,6 @@ def query3(pull, pathf, pathr, uid, mid, resPath, track_prov=0, how=0, where=Fal
     pass
 
 
-
-
-
-
 if __name__ == "__main__":
     logger.info("Assignment #1")
 
@@ -1522,23 +1561,19 @@ if __name__ == "__main__":
 
     # YOUR CODE HERE
 
-    # query1(True,"../data/friends.txt","../data/movie_ratings.txt",10,3,"../data/res.txt")
-    # query2(True,"../data/friends.txt","../data/movie_ratings.txt",5,None,"../data/res.txt")
-    # query3(True,"../data/friends.txt","../data/movie_ratings.txt",1190,16015,"../data/res.txt")
-
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-q", "--query", type=int, help="task number", default=2)
-    parser.add_argument("-f", "--ff", help="filepath", default='../data/lin_f.txt')
-    parser.add_argument("-m", "--mf", help="filepath", default='../data/lin_m.txt')
-    parser.add_argument("-uid", "--uid", help="uid", default=0)
+    parser.add_argument("-f", "--ff", help="filepath", default='../data/friends.txt')
+    parser.add_argument("-m", "--mf", help="filepath", default='../data/movie_ratings.txt')
+    parser.add_argument("-uid", "--uid", help="uid", default=344)
     parser.add_argument("-mid", "--mid", help="mid")
-    parser.add_argument("-p", "--pull", type=int, default=1, help="pull")
+    parser.add_argument("-p", "--pull", type=int, help="pull", default=1)
     parser.add_argument("-o", "--output", help="filepath", default='../data/res.txt')
 
-    parser.add_argument("-lin", "--lineage", help="lineage", type=int,default=1)
-    parser.add_argument("-how", "--how", help="how provenance", type=int,default=1)
-    parser.add_argument("-res", "--responsibility", help="responsibility", type=int,default=0)
+    parser.add_argument("-lin", "--lineage", help="lineage", type=int, default=1)
+    parser.add_argument("-how", "--how", help="how provenance", type=int, default=0)
+    parser.add_argument("-res", "--responsibility", help="responsibility", type=int, default=0)
     args = parser.parse_args()
 
     if args.query == 1:
@@ -1547,8 +1582,6 @@ if __name__ == "__main__":
         query2(args.pull, args.ff, args.mf, args.uid, args.mid, args.output, args.lineage, args.how)
     elif args.query == 3:
         query3(args.pull, args.ff, args.mf, args.uid, args.mid, args.output, args.lineage, args.how)
-
-    logger.debug("done")
 
     # TASK 2: Implement recommendation query for User A
     #
