@@ -326,12 +326,10 @@ def test_how():
     sr = Scan(filepath="../data/lin_m.txt", propagate_prov=True, track_prov=True, isleft=False, outputs=[se2])
     sf.start()
     sr.start()
-    answer = [('0', '1'), ('1', '10', '5'), ('0', '4'), ('4', '10', '8'), ('0', '18'), ('18', '10', '2')]
+    answer = 'AVG( (f1*r1@5), (f2*r2@8), (f3*r3@2) )'
     temp = sink.output[1]
     how = temp[0].how()
-    print(how)
-    lineage = temp[0].lineage()
-    assert lineage == answer
+    assert how == answer
     pass
 
 
@@ -368,8 +366,8 @@ def test_where_push():
     sr = Scan(filepath="../data/lin_m.txt", isleft=False, outputs=[se2], track_prov=True, propagate_prov=True)
     sf.start()
     sr.start()
-    answer = [[('lin_m.txt', 1, ('1', '10', '5'), '5'), ('lin_m.txt', 2, ('4', '10', '8'), '8'),
-               ('lin_m.txt', 3, ('18', '10', '2'), '2')]]
+    answer = [('lin_m.txt', 1, ('1', '10', '5'), '5'), ('lin_m.txt', 2, ('4', '10', '8'), '8'),
+               ('lin_m.txt', 3, ('18', '10', '2'), '2')]
     temp = sink.output[1]
     w = temp[0].where(0)
     assert w == answer
