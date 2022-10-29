@@ -738,7 +738,7 @@ class GroupBy(Operator):
 
                     # how provenance
                     if self.propagate_prov:
-                        how_p = '(' + d.metadata['how'] + '@' + d.tuple[value] + '),'
+                        how_p = '(' + d.metadata['how'] + '@' + d.tuple[value] + '), '
                         self.how_map[d.tuple[key]] += how_p
 
                     # lineage
@@ -1471,15 +1471,19 @@ def query1(pull, pathf, pathr, uid, mid, resPath, track_prov=1, where_row=0, whe
     pass
 
 
-def query2(pull, pathf, pathr, uid, mid, resPath, track_prov=0, how=0):
-    if track_prov is 0:
+def query2(pull, pathf, pathr, uid, mid, resPath, track_prov=-1, how=-1):
+    lin_line=0
+    if track_prov is -1:
         track_prov = False
     else:
+        lin_line=track_prov
         track_prov = True
 
-    if how is 0:
+    how_line=0
+    if how is -1:
         how = False
     else:
+        how_line = how
         how = True
 
     if pull == 1:
@@ -1504,15 +1508,13 @@ def query2(pull, pathf, pathr, uid, mid, resPath, track_prov=0, how=0):
 
         output = sink.output[1]
         if how is True:
-            howp=[]
-            for p in output:
-                howp.append(p.how())
-            output2file(howp)
+            o=output[how_line].how()
+            logger.debug(o)
+            output2file(o)
         if track_prov is True:
-            lin = []
-            for p in output:
-                lin.append(p.lineage())
-            output2file(lin)
+            o=output[lin_line].lineage()
+            logger.debug(o)
+            output2file(o)
 
     else:
         sink = Sink(inputs=None, pro_output={'how': how, 'lineage': track_prov, 'where': False}, block=True,
@@ -1537,16 +1539,13 @@ def query2(pull, pathf, pathr, uid, mid, resPath, track_prov=0, how=0):
 
         output = sink.output[1]
         if how is True:
-            howp=[]
-            for p in output:
-                howp.append(p.how())
-                logger.info(p.how())
-            output2file(howp)
+            o=output[how_line].how()
+            logger.debug(o)
+            output2file(o)
         if track_prov is True:
-            lin = []
-            for p in output:
-                lin.append(p.lineage())
-            output2file(lin)
+            o=output[lin_line].lineage()
+            logger.debug(o)
+            output2file(o)
 
     pass
 
@@ -1609,8 +1608,8 @@ if __name__ == "__main__":
     parser.add_argument("-mid", "--mid", help="mid",default=10)
     parser.add_argument("-p", "--pull", type=int, help="pull", default=1)
     parser.add_argument("-o", "--output", help="filepath", default='../data/res.txt')
-    parser.add_argument("-lin", "--lineage", help="lineage", type=int, default=1)  # --where-row
-    parser.add_argument("-how", "--how", help="how provenance", type=int, default=0)
+    parser.add_argument("-lin", "--lineage", help="lineage", type=int, default=-1)  # --where-row
+    parser.add_argument("-how", "--how", help="how provenance", type=int, default=-1)
     parser.add_argument("-wr", "--where-row", help="where-row", type=int, default=0)
     parser.add_argument("-wa", "--where-attribute", help="where-attribute", type=int, default=0)
     parser.add_argument("-res", "--responsibility", help="responsibility", type=int, default=0)
@@ -1637,9 +1636,9 @@ if __name__ == "__main__":
     # YOUR CODE HERE
     if args.query == 1:
         query1(args.pull, args.ff, args.mf, args.uid, args.mid, args.output,
-               track_prov=1,where_row=args.where_row,where_attribute=args.where_attribute)
+               where_row=args.where_row,where_attribute=args.where_attribute)
     elif args.query == 2:
-        query2(args.pull, args.ff, args.mf, args.uid, args.mid, args.output, args.lineage, args.how)
+        query2(args.pull, args.ff, args.mf, args.uid, args.mid, resPath=args.output, track_prov=args.lineage, how=args.how)
     elif args.query == 3:
         query3(args.pull, args.ff, args.mf, args.uid, args.mid, args.output, args.lineage, args.how)
     # TASK 3: Implement explanation query for User A and Movie M
