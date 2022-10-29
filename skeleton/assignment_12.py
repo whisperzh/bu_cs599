@@ -67,6 +67,8 @@ class ATuple:
 
     # Returns the input tuples with responsibility \rho >= 0.5 (if any)
     def responsible_inputs(self) -> List[Tuple]:
+        all_tuples=self.lineage()
+        self.value=self.tuple
         # YOUR CODE HERE (ONLY FOR TASK 4 IN ASSIGNMENT 2)
         pass
 
@@ -590,8 +592,7 @@ class Project(Operator):
 
             # how provenance
             if self.propagate_prov:
-                Arow.metadata = {}
-                Arow.metadata['how'] = d.metadata['how']
+                Arow.metadata = d.metadata
 
             ans[1].append(Arow)
         return ans
@@ -660,8 +661,7 @@ class Project(Operator):
 
                 # how provenance
                 if self.propagate_prov:
-                    Arow.metadata = {}
-                    Arow.metadata['how'] = d.metadata['how']
+                    Arow.metadata = d.metadata
 
                 ans[1].append(Arow)
             self.pushNxt.apply(ans)
@@ -763,8 +763,9 @@ class GroupBy(Operator):
 
                 # how provenance
                 if self.propagate_prov:
-                    Arow.metadata = {}
+                    Arow.metadata = {'gboperator':self}
                     Arow.metadata['how'] = self.how_map[k][:-2] + ' )'
+                    Arow.metadata['1+r']=diclen[k]
 
                 ans.append(Arow)
             return ans
@@ -785,7 +786,8 @@ class GroupBy(Operator):
                     Arow.operator = self
 
                 if self.propagate_prov:
-                    Arow.metadata = {}
+                    Arow.metadata = {'gboperator':self}
+                    # Arow.metadata['1+r']=len(data)
                     Arow.metadata['how'] = how[:-2] + ' )'
 
                 return [Arow]
@@ -1168,6 +1170,7 @@ class TopK(Operator):
     # Returns the where-provenance of the attribute
     # at index 'att_index' for each tuple in 'tuples'
     def where(self, att_index, tuples):
+        return self.next_opts.where(att_index,tuples)
         # YOUR CODE HERE (ONLY FOR TASK 2 IN ASSIGNMENT 2)
         pass
 

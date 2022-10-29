@@ -367,8 +367,36 @@ def test_where_push():
     sf.start()
     sr.start()
     answer = [('lin_m.txt', 1, ('1', '10', '5'), '5'), ('lin_m.txt', 2, ('4', '10', '8'), '8'),
-               ('lin_m.txt', 3, ('18', '10', '2'), '2')]
+              ('lin_m.txt', 3, ('18', '10', '2'), '2')]
     temp = sink.output[1]
     w = temp[0].where(0)
     assert w == answer
     pass
+
+#
+# def responsibility():
+#     sink = Sink(inputs=None, propagate_prov=True, track_prov=True, outputs=None, filepath=resPath)
+#
+#     topk = TopK(inputs=None, outputs=[sink], k=1)
+#     orderby = OrderBy(inputs=None, outputs=[topk], comparator="Rating", ASC=False)
+#     groupby = GroupBy(inputs=None, propagate_prov=True, track_prov=True, outputs=[orderby], key="MID", value="Rating",
+#                       agg_gun="AVG")
+#     proj = Project(inputs=None, propagate_prov=True, track_prov=True, outputs=[groupby], fields_to_keep=["MID","Rating"])
+#     join = Join(left_inputs=None, propagate_prov=True, track_prov=True, right_inputs=None, outputs=[proj],
+#                 left_join_attribute="UID2",
+#                 right_join_attribute="UID")
+#     se1 = Select(inputs=None, propagate_prov=True, track_prov=True, predicate={"UID1": 0}, outputs=[join])
+#     sf = Scan(filepath="../data/rsplty_f.txt", propagate_prov=True, track_prov=True, outputs=[se1])
+#     se2 = Select(inputs=None, track_prov=True, propagate_prov=True, predicate=None, outputs=[join])
+#     sr = Scan(filepath="../data/rsplty_m.txt", propagate_prov=True, track_prov=True, isleft=False, outputs=[se2])
+#     sf.start()
+#     sr.start()
+#     answer = 'AVG( (f1*r1@5), (f2*r2@8), (f3*r3@2) )'
+#     temp = sink.output[1]
+#     how = temp[0].how()
+#     temp[0].responsible_inputs()
+#     assert how == answer
+#     pass
+
+
+# responsibility()
