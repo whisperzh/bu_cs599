@@ -5,6 +5,7 @@ import nibabel as nib
 import numpy as np
 import os
 import shap
+from data_util import CNN_Data
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -23,15 +24,23 @@ red_transparent_blue = LinearSegmentedColormap.from_list("red_transparent_blue",
 # Returns two data loaders (objects of the class: torch.utils.data.DataLoader) that are
 # used to load the background and test datasets.
 def prepare_dataloaders(bg_csv, test_csv, bg_batch_size = 8, test_batch_size= 1, num_workers=1):
-    '''
+    """
     Attributes:
         bg_csv (str): The path to the background CSV file.
         test_csv (str): The path to the test data CSV file.
         bg_batch_size (int): The batch size of the background data loader
         test_batch_size (int): The batch size of the test data loader
         num_workers (int): The number of sub-processes to use for dataloader
-    '''
-    # YOUR CODE HERE
+    """
+
+    # bg_model = torch.jit.load(bg_csv)
+    # bg_model.eval()
+
+    training_data = CNN_Data(bg_csv)
+    test_data = CNN_Data(test_csv)
+
+    return training_data,test_data
+
     pass
 
 # Generates SHAP values for all pixels in the MRIs given by the test_loader
@@ -79,9 +88,12 @@ def plot_shap_on_mri(subject_mri, shap_values):
 
 
 if __name__ == '__main__':
-    # TASK I: Load CNN model and isntances (MRIs)
+    # TASK I: Load CNN model and instances (MRIs)
     #         Report how many of the 19 MRIs are classified correctly
     # YOUR CODE HERE 
+    prepare_dataloaders(bg_csv="../data/ADNI3/ADNI3.csv", test_csv=None)
+
+
 
     # TASK II: Probe the CNN model to generate predictions and compute the SHAP 
     #          values for each MRI using the DeepExplainer or the GradientExplainer. 
