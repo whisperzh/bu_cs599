@@ -1,0 +1,7 @@
+{
+    "python.testing.pytestArgs": [
+        "skeleton"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
+}
