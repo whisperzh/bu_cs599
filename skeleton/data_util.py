@@ -5,7 +5,7 @@ import pandas as pd
 import random
 import torch
 from torch.utils.data import Dataset
-
+import csv
 
 # The dataset
 class CNN_Data(Dataset):
@@ -57,6 +57,11 @@ def split_csv(csv_file, output_folder='./ADNI3', random_seed=1051):
         output_folder (str): The path to store the CSV files for the test and background datasets.
         random_seed (int): The seed number to shuffle the csv_file (you can also define your own seed).
     """
+    csv_reader = csv.reader(csv_file, delimiter=' ')
+    titles = csv_reader.__next__()
+    testfilename=output_folder+"/test.csv"
+    bgfilename=output_folder+"/bg_file.csv"
+
     # YOUR CODE HERE 
     pass
 

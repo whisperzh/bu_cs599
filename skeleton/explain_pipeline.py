@@ -86,12 +86,11 @@ def plot_shap_on_mri(subject_mri, shap_values):
     # YOUR CODE HERE
     pass
 
-
 if __name__ == '__main__':
     # TASK I: Load CNN model and instances (MRIs)
     #         Report how many of the 19 MRIs are classified correctly
     # YOUR CODE HERE 
-    prepare_dataloaders(bg_csv="../data/ADNI3/ADNI3.csv", test_csv=None)
+    # prepare_dataloaders(bg_csv="../data/ADNI3/ADNI3.csv", test_csv=None)
 
 
 
