@@ -39,7 +39,10 @@ def prepare_dataloaders(bg_csv, test_csv, bg_batch_size = 8, test_batch_size= 1,
     training_data = CNN_Data(bg_csv)
     test_data = CNN_Data(test_csv)
 
-    return training_data,test_data
+    train_dataloader = DataLoader(training_data, batch_size=64, shuffle=True)
+    test_dataloader = DataLoader(test_data, batch_size=64, shuffle=True)
+
+    return train_dataloader,test_dataloader
 
     pass
 

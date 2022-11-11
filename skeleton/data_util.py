@@ -1,4 +1,3 @@
-import csv
 import numpy as np
 import os
 import pandas as pd
@@ -6,6 +5,7 @@ import random
 import torch
 from torch.utils.data import Dataset
 import csv
+
 
 # The dataset
 class CNN_Data(Dataset):
@@ -57,12 +57,32 @@ def split_csv(csv_file, output_folder='./ADNI3', random_seed=1051):
         output_folder (str): The path to store the CSV files for the test and background datasets.
         random_seed (int): The seed number to shuffle the csv_file (you can also define your own seed).
     """
-    csv_reader = csv.reader(csv_file, delimiter=' ')
-    titles = csv_reader.__next__()
-    testfilename=output_folder+"/test.csv"
-    bgfilename=output_folder+"/bg_file.csv"
+    filepath, labels = read_csv(csv_file)
+    i = 0
+    while i < len(filepath):
+        if not (os.path.exists(filepath[i])):
+            del filepath[i]
+            del labels[i]
+            i -= 1
+        i += 1
+    sfdata = []
+    for i in range(len(filepath)):
+        t = [filepath[i], labels[i]]
+        sfdata.append(t)
+    random.shuffle(sfdata)
 
-    # YOUR CODE HERE 
+    testfilename = output_folder + "test.csv"
+    bgfilename = output_folder + "bg_file.csv"
+
+    test = sfdata[0:5]
+    bg = sfdata[5:]
+
+    df_test=pd.DataFrame(test)
+    df_bg=pd.DataFrame(bg)
+
+    df_test.to_csv(testfilename)
+    df_bg.to_csv(bgfilename)
+    # YOUR CODE HERE
     pass
 
 
@@ -72,10 +92,23 @@ def read_csv(filename):
     Attributes:
         filename (str): The path to the CSV file that contains the MRI metadata.
     """
-    # YOUR CODE HERE 
+    # YOUR CODE HERE
+
+    df = pd.read_csv(filename)
+    alldata = df.values.tolist()
+
+    file_paths = []
+    labels = []
+    for row in alldata:
+        filepath = '..' + row[0] + row[1]
+        file_paths.append(filepath)
+        labels.append(row[12])
+
+    return file_paths, labels
     pass
 
 
+split_csv("../data/datasets/ADNI3/ADNI3.csv","../data/")
 # Regions inside a segmented brain MRI (ONLY FOR TASK IV)
 brain_regions = {1.: 'TL hippocampus R',
                  2.: 'TL hippocampus L',
