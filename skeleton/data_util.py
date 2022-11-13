@@ -18,16 +18,14 @@ class CNN_Data(Dataset):
         Attributes:
             csv_dir (str): The path to the CSV file that contains the MRI metadata.
         """
-
         self.csv_dir = csv_dir
-        self.labels = pd.read_csv(csv_dir)  # annotations_file
-
+        self.data = pd.read_csv(csv_dir)  # annotations_file
         pass
 
     # Returns total number of data samples
     def __len__(self):
         # YOUR CODE HERE
-        return len(self.labels)
+        return len(self.data)
         pass
 
     # Returns the actual MRI data, the MRI filename, and the label
@@ -37,10 +35,10 @@ class CNN_Data(Dataset):
             idx (int): The sample MRI index.
         """
         # YOUR CODE HERE
-        path = self.labels.iloc[idx, 0]
-        MRI_filename = self.labels.iloc[idx, 1]
-        label = self.labels.iloc[idx, 1:]
-        return np.load(path + MRI_filename), MRI_filename, label
+        path = self.data.iloc[idx, 1]
+        mri_file = np.load(path)
+        label = self.data.iloc[idx, 2]
+        return mri_file, path, label
         pass
 
 
@@ -69,12 +67,14 @@ def split_csv(csv_file, output_folder='./ADNI3', random_seed=1051):
     for i in range(len(filepath)):
         t = [filepath[i], labels[i]]
         sfdata.append(t)
-    random.shuffle(sfdata)
 
+    random.seed(random_seed)
+    random.shuffle(sfdata)
+    print(sfdata)
     testfilename = output_folder + "test.csv"
     bgfilename = output_folder + "bg_file.csv"
 
-    test = sfdata[0:5]
+    test = sfdata[0:6]
     bg = sfdata[5:]
 
     df_test=pd.DataFrame(test)
@@ -108,7 +108,7 @@ def read_csv(filename):
     pass
 
 
-split_csv("../data/datasets/ADNI3/ADNI3.csv","../data/")
+
 # Regions inside a segmented brain MRI (ONLY FOR TASK IV)
 brain_regions = {1.: 'TL hippocampus R',
                  2.: 'TL hippocampus L',
