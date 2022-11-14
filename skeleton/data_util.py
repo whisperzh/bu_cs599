@@ -55,6 +55,9 @@ def split_csv(csv_file, output_folder='./ADNI3', random_seed=1051):
         output_folder (str): The path to store the CSV files for the test and background datasets.
         random_seed (int): The seed number to shuffle the csv_file (you can also define your own seed).
     """
+    if not os.path.exists(output_folder):
+        os.mkdir(output_folder)
+
     filepath, labels = read_csv(csv_file)
     i = 0
     while i < len(filepath):
@@ -74,7 +77,7 @@ def split_csv(csv_file, output_folder='./ADNI3', random_seed=1051):
     testfilename = output_folder + "test.csv"
     bgfilename = output_folder + "bg_file.csv"
 
-    test = sfdata[0:6]
+    test = sfdata[0:5]
     bg = sfdata[5:]
 
     df_test=pd.DataFrame(test)
