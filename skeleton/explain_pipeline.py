@@ -60,15 +60,16 @@ def create_SHAP_values(bg_loader, test_loader, mri_count, save_path):
     # YOUR CODE HERE
     mri_count = max(mri_count, 1)
     images, _, _ = next(iter(bg_loader))
+    print(images.shape)
     background = torch.unsqueeze(images, 1)
-
+    print(background.shape)
     e = shap.DeepExplainer(model=model, data=background)
 
-    test_gen=iter(test_loader)
+    test_gen = iter(test_loader)
     for i in range(min(len(test_loader), mri_count)):
         test_image, name, _ = next(test_gen)
         name = name[0].split("/")[-1]
-        test_image = torch.unsqueeze(test_image, 1)
+        test_image = torch.unsqueeze(test_image, 0)
         shap_values = e.shap_values(test_image)
         shap_values = np.array(shap_values)
         if not os.path.exists(save_path):
@@ -81,12 +82,12 @@ def create_SHAP_values(bg_loader, test_loader, mri_count, save_path):
 # Aggregates SHAP values per brain region and returns a dictionary that maps
 # each region to the average SHAP value of its pixels. 
 def aggregate_SHAP_values_per_region(shap_values, seg_path, brain_regions):
-    '''
+    """
     Attributes:
         shap_values (ndarray): The shap values for an MRI (.npy).
-        seg_path (str): The path to the segmented MRI (.nii). 
+        seg_path (str): The path to the segmented MRI (.nii).
         brain_regions (dict): The regions inside the segmented MRI image (see data_utl.py)
-    '''
+    """
     # YOUR CODE HERE
     pass
 
@@ -102,19 +103,39 @@ def output_top_10_lst(csv_file):
 
 
 # Plots SHAP values on a 2D slice of the 3D MRI.
-def plot_shap_on_mri(subject_mri, shap_values):
+def plot_shap_on_mri(subject_mri, shap_values,ad):
     """
     Attributes:
         subject_mri (str): The path to the MRI (.npy).
         shap_values (str): The path to the SHAP explanation that corresponds to the MRI (.npy).
     """
     # YOUR CODE HERE
-    img = nib.load(
-        "../data/datasets/ADNI3/seg/ADNI_135_S_6510_MR_Accelerated_Sag_IR-FSPGR___br_raw_20190823121302839_11_S863934_I1215774.nii")
-    img = img.get_fdata()
-    img = np.rot90(img[91])
-    plt.imshow(img, cmap='gray')
-    plt.show()
+
+    mri_np = np.load(subject_mri)
+    mri_np = np.expand_dims(mri_np, -1)
+    mri_np = np.expand_dims(mri_np, 0)
+
+    shap_np = np.load(shap_values)
+    print("shap" + str(shap_np.shape))
+    print("mri" + str(mri_np.shape))
+
+    shap_np = shap_np[ad, 0, 0]
+    shap_np = np.expand_dims(shap_np, -1)
+    shap_np = np.expand_dims(shap_np, 0)
+
+    print(shap_np.shape)
+    print(mri_np.shape)
+
+    path = "../output"
+
+    side = shap.image_plot(shap_values=shap_np[:,91], pixel_values=mri_np[:,91], show=False)
+    plt.savefig(os.path.join(path, 'side'+str(ad)+'.png'))
+
+    forward = shap.image_plot(shap_values=shap_np[:,:,109], pixel_values=mri_np[:,:,109], show=False)
+    plt.savefig(os.path.join(path, 'forward'+str(ad)+'.png'))
+
+    upper = shap.image_plot(shap_values=shap_np[:,:,:,91], pixel_values=mri_np[:,:,:,91], show=False)
+    plt.savefig(os.path.join(path, 'upper'+str(ad)+'.png'))
     pass
 
 
@@ -148,10 +169,24 @@ def task1(loaders, outputPath):
     f.close()
 
 
+def task3(input_folder, output_folder):
+    ad0_mri_name = os.path.join(input_folder,
+                                "ADNI_135_S_6510_MR_Accelerated_Sag_IR-FSPGR___br_raw_20190823121302839_11_S863934_I1215774.npy")
+    ad1_mri_name = os.path.join(input_folder,
+                                "ADNI_022_S_6013_MR_Sagittal_3D_Accelerated_MPRAGE_br_raw_20190314145101831_129_S806245_I1142379.npy")
+    ad0_shap_name = os.path.join(output_folder,
+                                 "ADNI_135_S_6510_MR_Accelerated_Sag_IR-FSPGR___br_raw_20190823121302839_11_S863934_I1215774.npy")
+    ad1_shap_name = os.path.join(output_folder,
+                                 "ADNI_022_S_6013_MR_Sagittal_3D_Accelerated_MPRAGE_br_raw_20190314145101831_129_S806245_I1142379.npy")
+
+    plot_shap_on_mri(subject_mri=ad0_mri_name, shap_values=ad0_shap_name,ad=0)
+    plot_shap_on_mri(subject_mri=ad1_mri_name, shap_values=ad1_shap_name,ad=1)
+
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-t", "--task", type=int, help="[1/2/3/4]", default=2)
+    parser.add_argument("-t", "--task", type=int, help="[1/2/3/4]", default=3)
     parser.add_argument("-df", "--dataFolder", type=str, help="[path to the ADNI3 folder]",
                         default='../data/datasets/ADNI3/')
     parser.add_argument("-of", "--outputFolder", type=str,
@@ -180,14 +215,14 @@ if __name__ == '__main__':
     #          correct prediction into output/SHAP/data/
     # YOUR CODE HERE
     elif args.task == 2:
-        create_SHAP_values(train_dataloader, test_dataloader, 3,
+        create_SHAP_values(train_dataloader, test_dataloader, 5,
                            os.path.join(args.outputFolder, "task2/"))
     # TASK III: Plot an explanation (pixel-based SHAP heatmaps) for a random MRI.
     #           Save heatmaps into output/SHAP/heatmaps/
     # YOUR CODE HERE 
 
     elif args.task == 3:
-        plot_shap_on_mri()
+        task3(args.dataFolder, os.path.join(args.outputFolder, "task2/"))
 
     # TASK IV: Map each SHAP value to its brain region and aggregate SHAP values per region.
     #          Report the top-10 most contributing regions per class (AD/NC) as top10_{class}.csv
