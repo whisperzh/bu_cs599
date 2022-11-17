@@ -103,7 +103,7 @@ def aggregate_SHAP_values_per_region(shap_values, seg_path, brain_regions=brain_
                 else:
                     key = region_map[i][j][k]
                     origin = contribution_map.get(key, 0)
-                    contribution_map[key] = origin + abs(val)
+                    contribution_map[key] = origin + val
     ans = []
 
     index = 0
@@ -128,7 +128,7 @@ def output_top_5_lst(content, csv_file):
     """
     # Region number	region	value
     df=pd.DataFrame(content,columns =['Region number', 'region', 'value'])
-    df.to_csv(csv_file)
+    df.to_csv(csv_file,index=False)
     # YOUR CODE HERE
     pass
 
@@ -217,15 +217,23 @@ def task3(input_folder, output_folder):
 
 def task4(nii_folder, shap_folder):
     shapv0 = np.load(os.path.join(shap_folder,
-                                  "ADNI_135_S_6510_MR_Accelerated_Sag_IR-FSPGR___br_raw_20190823121302839_11_S863934_I1215774.npy"))[
-        0]
+                                  "ADNI_135_S_6510_MR_Accelerated_Sag_IR-FSPGR___br_raw_20190823121302839_11_S863934_I1215774.npy"))[0]
     nii0p = os.path.join(nii_folder,
                          "ADNI_135_S_6510_MR_Accelerated_Sag_IR-FSPGR___br_raw_20190823121302839_11_S863934_I1215774.nii")
-    op = aggregate_SHAP_values_per_region(shapv0, nii0p)
+    op0 = aggregate_SHAP_values_per_region(shapv0, nii0p)
+
+    shapv1 = np.load(os.path.join(shap_folder,
+                                  "ADNI_022_S_6013_MR_Sagittal_3D_Accelerated_MPRAGE_br_raw_20190314145101831_129_S806245_I1142379.npy"))[1]
+    nii1p = os.path.join(nii_folder,
+                         "ADNI_022_S_6013_MR_Sagittal_3D_Accelerated_MPRAGE_br_raw_20190314145101831_129_S806245_I1142379.nii")
+    op1 = aggregate_SHAP_values_per_region(shapv1, nii1p)
+
     path = "../output/task4"
     if not os.path.exists(path):
         os.mkdir(path)
-    output_top_5_lst(op, os.path.join(path, 'task-4-false.csv'))
+    output_top_5_lst(op0, os.path.join(path, 'task-4-false.csv'))
+    output_top_5_lst(op1, os.path.join(path, 'task-4-true.csv'))
+
     pass
 
 

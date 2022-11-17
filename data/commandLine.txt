@@ -3,3 +3,11 @@ python assignment_12.py --query 2 --ff ../data/lin_f.txt --mf ../data/lin_m.txt 
 python assignment_12.py --query 1 --ff ../data/lin_f.txt --mf ../data/lin_m.txt --uid 0 --mid 10 --pull 1 --output ../data/res.txt --where-row 0 --where-attribute 0
 
 python assignment_12.py --query 2 --ff ../data/lin_f.txt --mf ../data/lin_m.txt --uid 0 --pull 1 --output ../data/res.txt  --how 0
+
+python explain_pipeline.py --task 1 --dataFolder ../data/datasets/ADNI3/ --outputFolder ../output/
+
+python explain_pipeline.py --task 2 --dataFolder ../data/datasets/ADNI3/ --outputFolder ../output/
+
+python explain_pipeline.py --task 3 --dataFolder ../data/datasets/ADNI3/ --outputFolder ../output/
+
+python explain_pipeline.py --task 4 --dataFolder ../data/datasets/ADNI3/ --outputFolder ../output/
