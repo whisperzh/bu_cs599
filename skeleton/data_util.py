@@ -80,8 +80,8 @@ def split_csv(csv_file, output_folder='./ADNI3', random_seed=1051):
     test = sfdata[0:5]
     bg = sfdata[5:]
 
-    df_test=pd.DataFrame(test)
-    df_bg=pd.DataFrame(bg)
+    df_test = pd.DataFrame(test)
+    df_bg = pd.DataFrame(bg)
 
     df_test.to_csv(testfilename)
     df_bg.to_csv(bgfilename)
@@ -109,7 +109,6 @@ def read_csv(filename):
 
     return file_paths, labels
     pass
-
 
 
 # Regions inside a segmented brain MRI (ONLY FOR TASK IV)

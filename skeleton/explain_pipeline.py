@@ -7,7 +7,7 @@ import pandas as pd
 import os
 import shap
 import model
-from data_util import CNN_Data, split_csv
+from data_util import CNN_Data, split_csv, brain_regions
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -81,7 +81,7 @@ def create_SHAP_values(bg_loader, test_loader, mri_count, save_path):
 
 # Aggregates SHAP values per brain region and returns a dictionary that maps
 # each region to the average SHAP value of its pixels. 
-def aggregate_SHAP_values_per_region(shap_values, seg_path, brain_regions):
+def aggregate_SHAP_values_per_region(shap_values, seg_path, brain_regions=brain_regions):
     """
     Attributes:
         shap_values (ndarray): The shap values for an MRI (.npy).
@@ -89,21 +89,52 @@ def aggregate_SHAP_values_per_region(shap_values, seg_path, brain_regions):
         brain_regions (dict): The regions inside the segmented MRI image (see data_utl.py)
     """
     # YOUR CODE HERE
+    contribution_map = {}
+    # n=nib.load("../data/datasets/ADNI3/seg/ADNI_135_S_6510_MR_Accelerated_Sag_IR-FSPGR___br_raw_20190823121302839_11_S863934_I1215774.nii")
+    n = nib.load(seg_path)
+    region_map = n.get_fdata()
+    shap_values = shap_values[0][0]
+    for i in range(len(shap_values)):
+        for j in range(len(shap_values[0])):
+            for k in range(len(shap_values[0][0])):
+                val = shap_values[i][j][k]
+                if val == 0:
+                    continue
+                else:
+                    key = region_map[i][j][k]
+                    origin = contribution_map.get(key, 0)
+                    contribution_map[key] = origin + abs(val)
+    ans = []
+
+    index = 0
+    for i in sorted(contribution_map.items(), key=lambda x: x[1], reverse=True):
+        if index == 10:
+            break
+        if i[0] == 0:
+            continue
+        else:
+            index += 1
+            ans.append([i[0], brain_regions[i[0]], i[1]])
+    return ans
+
     pass
 
 
 # Returns a list containing the top-10 most contributing brain regions to each predicted class (AD/NotAD).
-def output_top_10_lst(csv_file):
-    '''
+def output_top_5_lst(content, csv_file):
+    """
     Attribute:
         csv_file (str): The path to a CSV file that contains the aggregated SHAP values per region.
-    '''
+    """
+    # Region number	region	value
+    df=pd.DataFrame(content,columns =['Region number', 'region', 'value'])
+    df.to_csv(csv_file)
     # YOUR CODE HERE
     pass
 
 
 # Plots SHAP values on a 2D slice of the 3D MRI.
-def plot_shap_on_mri(subject_mri, shap_values,ad):
+def plot_shap_on_mri(subject_mri, shap_values, ad):
     """
     Attributes:
         subject_mri (str): The path to the MRI (.npy).
@@ -128,14 +159,15 @@ def plot_shap_on_mri(subject_mri, shap_values,ad):
 
     path = "../output"
 
-    side = shap.image_plot(shap_values=shap_np[:,91], pixel_values=mri_np[:,91], show=False)
-    plt.savefig(os.path.join(path, 'side'+str(ad)+'.png'))
+    side = shap.image_plot(shap_values=np.rot90(shap_np[:, 91]), pixel_values=np.rot90(mri_np[:, 91]), show=False)
+    plt.savefig(os.path.join(path, 'side' + str(ad) + '.png'))
 
-    forward = shap.image_plot(shap_values=shap_np[:,:,109], pixel_values=mri_np[:,:,109], show=False)
-    plt.savefig(os.path.join(path, 'forward'+str(ad)+'.png'))
+    forward = shap.image_plot(shap_values=np.rot90(shap_np[:, :, 109]), pixel_values=np.rot90(mri_np[:, :, 109]),
+                              show=False)
+    plt.savefig(os.path.join(path, 'forward' + str(ad) + '.png'))
 
-    upper = shap.image_plot(shap_values=shap_np[:,:,:,91], pixel_values=mri_np[:,:,:,91], show=False)
-    plt.savefig(os.path.join(path, 'upper'+str(ad)+'.png'))
+    upper = shap.image_plot(shap_values=shap_np[:, :, :, 91], pixel_values=mri_np[:, :, :, 91], show=False)
+    plt.savefig(os.path.join(path, 'upper' + str(ad) + '.png'))
     pass
 
 
@@ -179,14 +211,28 @@ def task3(input_folder, output_folder):
     ad1_shap_name = os.path.join(output_folder,
                                  "ADNI_022_S_6013_MR_Sagittal_3D_Accelerated_MPRAGE_br_raw_20190314145101831_129_S806245_I1142379.npy")
 
-    plot_shap_on_mri(subject_mri=ad0_mri_name, shap_values=ad0_shap_name,ad=0)
-    plot_shap_on_mri(subject_mri=ad1_mri_name, shap_values=ad1_shap_name,ad=1)
+    plot_shap_on_mri(subject_mri=ad0_mri_name, shap_values=ad0_shap_name, ad=0)
+    plot_shap_on_mri(subject_mri=ad1_mri_name, shap_values=ad1_shap_name, ad=1)
+
+
+def task4(nii_folder, shap_folder):
+    shapv0 = np.load(os.path.join(shap_folder,
+                                  "ADNI_135_S_6510_MR_Accelerated_Sag_IR-FSPGR___br_raw_20190823121302839_11_S863934_I1215774.npy"))[
+        0]
+    nii0p = os.path.join(nii_folder,
+                         "ADNI_135_S_6510_MR_Accelerated_Sag_IR-FSPGR___br_raw_20190823121302839_11_S863934_I1215774.nii")
+    op = aggregate_SHAP_values_per_region(shapv0, nii0p)
+    path = "../output/task4"
+    if not os.path.exists(path):
+        os.mkdir(path)
+    output_top_5_lst(op, os.path.join(path, 'task-4-false.csv'))
+    pass
 
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-t", "--task", type=int, help="[1/2/3/4]", default=3)
+    parser.add_argument("-t", "--task", type=int, help="[1/2/3/4]", default=4)
     parser.add_argument("-df", "--dataFolder", type=str, help="[path to the ADNI3 folder]",
                         default='../data/datasets/ADNI3/')
     parser.add_argument("-of", "--outputFolder", type=str,
@@ -223,6 +269,8 @@ if __name__ == '__main__':
 
     elif args.task == 3:
         task3(args.dataFolder, os.path.join(args.outputFolder, "task2/"))
+    elif args.task == 4:
+        task4(shap_folder=os.path.join(args.outputFolder, "task2/"), nii_folder=os.path.join(args.dataFolder, 'seg/'))
 
     # TASK IV: Map each SHAP value to its brain region and aggregate SHAP values per region.
     #          Report the top-10 most contributing regions per class (AD/NC) as top10_{class}.csv
