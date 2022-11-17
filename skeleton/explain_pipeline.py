@@ -159,10 +159,10 @@ def plot_shap_on_mri(subject_mri, shap_values, ad):
 
     path = "../output"
 
-    side = shap.image_plot(shap_values=np.rot90(shap_np[:, 91]), pixel_values=np.rot90(mri_np[:, 91]), show=False)
+    side = shap.image_plot(shap_values=shap_np[:, 91], pixel_values=mri_np[:, 91], show=False)
     plt.savefig(os.path.join(path, 'side' + str(ad) + '.png'))
 
-    forward = shap.image_plot(shap_values=np.rot90(shap_np[:, :, 109]), pixel_values=np.rot90(mri_np[:, :, 109]),
+    forward = shap.image_plot(shap_values=shap_np[:, :, 109], pixel_values=mri_np[:, :, 109],
                               show=False)
     plt.savefig(os.path.join(path, 'forward' + str(ad) + '.png'))
 
