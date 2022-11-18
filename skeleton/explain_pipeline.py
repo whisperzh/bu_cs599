@@ -193,13 +193,25 @@ def task1(loaders, outputPath):
             for data in load:
                 mri_file, path, label = data
                 outputs = model(torch.unsqueeze(mri_file, 1))
-                ans = 1
-                if outputs[0][0] > outputs[0][1]:
-                    ans = 0
-                if label == ans:
-                    right += 1
+
+                if len(outputs)>2:
+                    for i in range(len(outputs.tolist())):
+                        ans = 1
+                        if int(outputs.tolist()[i][0]) > int(outputs.tolist()[i][1]):
+                            ans = 0
+                        if label[i] == ans:
+                            right+=1
+                        else:
+                            wrong+=1
                 else:
-                    wrong += 1
+                    ans = 1
+                    if outputs[0][0] > outputs[0][1]:
+                        ans = 0
+                    if label[0] == ans:
+                        right+=1
+                    else:
+                        wrong+=1
+
     schema = ("Classified", "value")
     rows = [schema]
     rows.append(("Correct", right))
@@ -209,6 +221,7 @@ def task1(loaders, outputPath):
     f.writelines("Correct," + str(right) + "\n")
     f.writelines("Incorrect," + str(wrong) + "\n")
     f.close()
+    return right,wrong
 
 
 def task3(input_folder, output_folder):
@@ -250,7 +263,7 @@ def task4(nii_folder, shap_folder):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-t", "--task", type=int, help="[1/2/3/4]", default=4)
+    parser.add_argument("-t", "--task", type=int, help="[1/2/3/4]", default=1)
     parser.add_argument("-df", "--dataFolder", type=str, help="[path to the ADNI3 folder]",
                         default='../data/datasets/ADNI3/')
     parser.add_argument("-of", "--outputFolder", type=str,
@@ -270,7 +283,7 @@ if __name__ == '__main__':
     #         Report how many of the 19 MRIs are classified correctly
     # YOUR CODE HERE
     if args.task == 1:
-        task1([test_dataloader], os.path.join(args.outputFolder, "task-1.csv"))
+        task1([test_dataloader,train_dataloader], os.path.join(args.outputFolder, "task-1.csv"))
 
 
     # TASK II: Probe the CNN model to generate predictions and compute the SHAP
