@@ -90,10 +90,12 @@ def aggregate_SHAP_values_per_region(shap_values, seg_path, brain_regions=brain_
     """
     # YOUR CODE HERE
     contribution_map = {}
+    count={}
     # n=nib.load("../data/datasets/ADNI3/seg/ADNI_135_S_6510_MR_Accelerated_Sag_IR-FSPGR___br_raw_20190823121302839_11_S863934_I1215774.nii")
     n = nib.load(seg_path)
     region_map = n.get_fdata()
     shap_values = shap_values[0][0]
+
     for i in range(len(shap_values)):
         for j in range(len(shap_values[0])):
             for k in range(len(shap_values[0][0])):
@@ -104,6 +106,14 @@ def aggregate_SHAP_values_per_region(shap_values, seg_path, brain_regions=brain_
                     key = region_map[i][j][k]
                     origin = contribution_map.get(key, 0)
                     contribution_map[key] = origin + val
+                    count[key]=count.get(key,0)+1
+
+    for k in contribution_map.keys():
+        if contribution_map[k]==0:
+            continue
+        else:
+            contribution_map[k]/=count[k]
+
     ans = []
 
     index = 0
