@@ -14,7 +14,7 @@ format and run models on it
 For tracing purpose you will find functions with comment 'TODO: Trace this function'. Those functions need to be traced
 as part of task 3. 
 
-#Commands for running on multiple servers
+# Commands for running on multiple servers
 
 Make sure to install docker on all your servers
 Follow instructions from here: https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-20-04
