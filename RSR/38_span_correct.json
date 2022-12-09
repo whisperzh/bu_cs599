@@ -1,0 +1,2294 @@
+{
+    "data": [
+        {
+            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+            "spans": [
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "ff773a1d8649a96e",
+                    "flags": 1,
+                    "operationName": "initialize_workers",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "e78c3bcb20836c0b"
+                        }
+                    ],
+                    "startTime": 1670580419103569,
+                    "duration": 10006960,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.config"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "1b10fd71a03d1ba2",
+                    "flags": 1,
+                    "operationName": "fetch_urls",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "5e1b4f10f70d87ae"
+                        }
+                    ],
+                    "startTime": 1670580429110929,
+                    "duration": 69301355,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.utils"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "5be10a8d1ad9e28b",
+                    "flags": 1,
+                    "operationName": "get_urls_for_tile",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "5e1b4f10f70d87ae"
+                        }
+                    ],
+                    "startTime": 1670580429111128,
+                    "duration": 69299796,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.utils"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "a4cbe7eb4afbe96d",
+                    "flags": 1,
+                    "operationName": "pull_data",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "b11ffd54a2fa7555"
+                        }
+                    ],
+                    "startTime": 1670580498417680,
+                    "duration": 2102,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "560c2062b9cf91fa",
+                    "flags": 1,
+                    "operationName": "pull_data",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "b11ffd54a2fa7555"
+                        }
+                    ],
+                    "startTime": 1670580498416106,
+                    "duration": 1458,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "8e9dc5eb9256b16c",
+                    "flags": 1,
+                    "operationName": "store_partition",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "ef2bb79d1ef8fd01"
+                        }
+                    ],
+                    "startTime": 1670580501390152,
+                    "duration": 31694,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "892967ba7fcef566",
+                    "flags": 1,
+                    "operationName": "pull_data",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "b11ffd54a2fa7555"
+                        }
+                    ],
+                    "startTime": 1670580498417137,
+                    "duration": 2196546,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "5e76b6a199d4bb51",
+                    "flags": 1,
+                    "operationName": "index_time_from_filename",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "08c0c2def2faed10"
+                        }
+                    ],
+                    "startTime": 1670580500619141,
+                    "duration": 239,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "54c743a14b251841",
+                    "flags": 1,
+                    "operationName": "partition_nodes",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "08c0c2def2faed10"
+                        }
+                    ],
+                    "startTime": 1670580500863663,
+                    "duration": 31,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "f70d0df4e926b56a",
+                    "flags": 1,
+                    "operationName": "partition_workers",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "08c0c2def2faed10"
+                        }
+                    ],
+                    "startTime": 1670580500863760,
+                    "duration": 16,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "08c0c2def2faed10",
+                    "flags": 1,
+                    "operationName": "create_chunks",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "c657c78469735efe"
+                        }
+                    ],
+                    "startTime": 1670580500619053,
+                    "duration": 244739,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "ef2bb79d1ef8fd01",
+                    "flags": 1,
+                    "operationName": "send_data_to_worker",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "bb55e2675dc33721"
+                        }
+                    ],
+                    "startTime": 1670580501180982,
+                    "duration": 11281,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "b3891eb38e8041a2",
+                    "flags": 1,
+                    "operationName": "send_data_to_worker",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "bb55e2675dc33721"
+                        }
+                    ],
+                    "startTime": 1670580501234246,
+                    "duration": 10772,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "b6e08bf899f1ee45",
+                    "flags": 1,
+                    "operationName": "send_data_to_worker",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "bb55e2675dc33721"
+                        }
+                    ],
+                    "startTime": 1670580501344016,
+                    "duration": 7869,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "08f36d96a9d3cd47",
+                    "flags": 1,
+                    "operationName": "send_data_to_worker",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "bb55e2675dc33721"
+                        }
+                    ],
+                    "startTime": 1670580501372714,
+                    "duration": 11979,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "bb55e2675dc33721",
+                    "flags": 1,
+                    "operationName": "reshuffle",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "c657c78469735efe"
+                        }
+                    ],
+                    "startTime": 1670580500863833,
+                    "duration": 520921,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "c657c78469735efe",
+                    "flags": 1,
+                    "operationName": "worker_redistribute",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "6ca6217fa5136782"
+                        }
+                    ],
+                    "startTime": 1670580500618324,
+                    "duration": 766458,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "9113c1678f0159ec",
+                    "flags": 1,
+                    "operationName": "pull_data",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "b11ffd54a2fa7555"
+                        }
+                    ],
+                    "startTime": 1670580498416935,
+                    "duration": 1971,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "f3b57d2ea324bb62",
+                    "flags": 1,
+                    "operationName": "worker_redistribute",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "6ca6217fa5136782"
+                        }
+                    ],
+                    "startTime": 1670580500619105,
+                    "duration": 636,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "816cd044459215d7",
+                    "flags": 1,
+                    "operationName": "store_partition",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "b6e08bf899f1ee45"
+                        }
+                    ],
+                    "startTime": 1670580501355016,
+                    "duration": 23225,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "6ca6217fa5136782",
+                    "flags": 1,
+                    "operationName": "garch_redistribute",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "5e1b4f10f70d87ae"
+                        }
+                    ],
+                    "startTime": 1670580500615074,
+                    "duration": 808207,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.utils"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "5e1b4f10f70d87ae",
+                    "flags": 1,
+                    "operationName": "google_archive",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "e78c3bcb20836c0b"
+                        }
+                    ],
+                    "startTime": 1670580429110830,
+                    "duration": 72312670,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "__main__"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "b11ffd54a2fa7555",
+                    "flags": 1,
+                    "operationName": "download",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "5e1b4f10f70d87ae"
+                        }
+                    ],
+                    "startTime": 1670580498412461,
+                    "duration": 2202245,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.utils"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "0a3812555bc59128",
+                    "flags": 1,
+                    "operationName": "store_partition",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "b3891eb38e8041a2"
+                        }
+                    ],
+                    "startTime": 1670580501251617,
+                    "duration": 25715,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "067f4565be6ae717",
+                    "flags": 1,
+                    "operationName": "worker_redistribute",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "6ca6217fa5136782"
+                        }
+                    ],
+                    "startTime": 1670580500618241,
+                    "duration": 666,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "d9996bd759646acf",
+                    "flags": 1,
+                    "operationName": "store_partition",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "08f36d96a9d3cd47"
+                        }
+                    ],
+                    "startTime": 1670580501387855,
+                    "duration": 23920,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "b68341995ea2ad28",
+                    "flags": 1,
+                    "operationName": "worker_redistribute",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "6ca6217fa5136782"
+                        }
+                    ],
+                    "startTime": 1670580500620161,
+                    "duration": 812,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "ee9112c03556e721",
+                    "flags": 1,
+                    "operationName": "apply_model_worker",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "8b30cde2a2e9ddc2"
+                        }
+                    ],
+                    "startTime": 1670580501427251,
+                    "duration": 390285768,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "b1ec2a12e1e8c2b4",
+                    "flags": 1,
+                    "operationName": "model_apply_model",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "ee9112c03556e721"
+                        }
+                    ],
+                    "startTime": 1670580501427433,
+                    "duration": 390281381,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.models"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "f3103454f49b0334",
+                    "flags": 1,
+                    "operationName": "apply_model_worker",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "8b30cde2a2e9ddc2"
+                        }
+                    ],
+                    "startTime": 1670580501426024,
+                    "duration": 397325784,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "39f42819b38f26dc",
+                    "flags": 1,
+                    "operationName": "model_apply_model",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "f3103454f49b0334"
+                        }
+                    ],
+                    "startTime": 1670580501426231,
+                    "duration": 397325482,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.models"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "f14d3a004ec08e4e",
+                    "flags": 1,
+                    "operationName": "apply_model_worker",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "8b30cde2a2e9ddc2"
+                        }
+                    ],
+                    "startTime": 1670580501428348,
+                    "duration": 423394890,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "202043d232a7b2f7",
+                    "flags": 1,
+                    "operationName": "model_apply_model",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "f14d3a004ec08e4e"
+                        }
+                    ],
+                    "startTime": 1670580501428490,
+                    "duration": 423390580,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.models"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "e78c3bcb20836c0b",
+                    "flags": 1,
+                    "operationName": "main-start",
+                    "references": [],
+                    "startTime": 1670580419045143,
+                    "duration": 520840175,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "__main__"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "8b30cde2a2e9ddc2",
+                    "flags": 1,
+                    "operationName": "apply_model_util",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "e78c3bcb20836c0b"
+                        }
+                    ],
+                    "startTime": 1670580501423648,
+                    "duration": 438455054,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.utils"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "6d721d317039eaff",
+                    "flags": 1,
+                    "operationName": "collect_data",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "e78c3bcb20836c0b"
+                        }
+                    ],
+                    "startTime": 1670580939879109,
+                    "duration": 5508,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.utils"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "a9c2ca84fd7bfc9b",
+                    "flags": 1,
+                    "operationName": "get_output_files",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "6d721d317039eaff"
+                        }
+                    ],
+                    "startTime": 1670580939883193,
+                    "duration": 618,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                    "spanID": "dfa17d3a4fec2b56",
+                    "flags": 1,
+                    "operationName": "get_output_files",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "9fc2781d7a72e3a4163846ca076910c1",
+                            "spanID": "6d721d317039eaff"
+                        }
+                    ],
+                    "startTime": 1670580939880964,
+                    "duration": 1311,
+                    "tags": [
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.1.0"
+                        },
+                        {
+                            "key": "service.name",
+                            "type": "string",
+                            "value": "RSR"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        },
+                        {
+                            "key": "otel.library.name",
+                            "type": "string",
+                            "value": "lib.workers"
+                        },
+                        {
+                            "key": "otel.library.version",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "proto"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                }
+            ],
+            "processes": {
+                "p1": {
+                    "serviceName": "RSR",
+                    "tags": []
+                }
+            },
+            "warnings": null
+        }
+    ],
+    "total": 0,
+    "limit": 0,
+    "offset": 0,
+    "errors": null
+}

@@ -1,0 +1,17 @@
+ssh -i rsr-private-key ubuntu@199.94.60.229
+ssh -i rsr-private-key ubuntu@199.94.60.89
+
+docker cp ./. cb4599ac4e9a:/home/ray/RSR/
+(base) ray@docker-desktop:~/RSR/src$ python application-jaeger.py --urls=1
+
+
+context_dict=None):
+    tracer = trace.get_tracer(__name__)
+    ctx = get_parent_context(context_dict["traceId"], context_dict["spanId"])
+
+    with tracer.start_as_current_span("store_partition", context=ctx):
+
+
+context = main.get_span_context()
+context_dict = {'traceId': context.trace_id,
+                'spanId': context.span_id}
